@@ -11,8 +11,10 @@ public class BaseRobot {
         rc = inrc;
     }
     public void run() throws GameActionException {
-        movement = new Movement();
+        movement = new Movement(rc.getLocation(),rc.getType().strideRadius);
         donate_extra_bullets();
+        space_robots();
+        small_rand_pull();
     }
 
     /**
@@ -71,6 +73,28 @@ public class BaseRobot {
 
         // A move never happened, so return false.
         return false;
+    }
+    boolean moveOpti()throws GameActionException{
+        final MapLocation opt_point = movement.best_point();
+        if(rc.canMove(opt_point)){
+            rc.move(opt_point);
+            return true;
+        }
+        return false;
+    }
+
+    void space_robots(){
+        final MapLocation myloc = rc.getLocation();
+        for(RobotInfo r : rc.senseNearbyRobots(-1,rc.getTeam())){
+            float dis = myloc.distanceTo(r.location);
+            if(dis < 3){
+                movement.add_liniar_pull(r.location,Const.TROOP_SPACE_VAL/dis);
+            }
+        }
+    }
+    void small_rand_pull(){
+        MapLocation loc = rc.getLocation().add(randomDirection(),50);
+        movement.add_liniar_pull(loc,Const.SMALL_RAND_VAL);
     }
 
     boolean tryBuildRand(RobotType rty)throws GameActionException{
@@ -138,6 +162,40 @@ public class BaseRobot {
             }
         }
         return false;
+    }
+    static float randInRange(float min, float max){
+        final float dis = max - min;
+        return (float)(Math.random()) * dis + min;
+    }
+    MapLocation[] movementPoints(){
+        final int edge_points = 15;
+        final int cen_points = 50;
+        final int tot_points = edge_points + cen_points;
+        final float movedis = rc.getType().strideRadius;
+
+        MapLocation[] allps = new MapLocation[tot_points];
+
+        MapLocation cen = rc.getLocation();
+
+        //gets random points around edges
+        Direction west = new Direction(1,0);
+        for(int i = 0; i < edge_points; i++){
+            Direction rdir = west.rotateLeftRads(randInRange(0,(float)(Math.PI)));
+            allps[i] = cen.add(rdir,movedis);
+        }
+        //gets random points in middle
+        for(int j = cen_points; j < tot_points; j++){
+            while(true){
+                Float x = randInRange(cen.x - movedis,cen.x + movedis);
+                Float y = randInRange(cen.y - movedis,cen.y + movedis);
+                MapLocation loc = new MapLocation(x,y);
+                if(loc.distanceTo(cen) < movedis){
+                    allps[j] = loc;
+                    break;
+                }
+            }
+        }
+        return allps;
     }
 
     void donate_extra_bullets()throws GameActionException{

@@ -21,6 +21,7 @@ public class Gardener extends BaseRobot{
             if (buildTreeRand()) {
                 tree_built = true;
             }
+        }else{
             wander_timer--;
         }
         water_tree();

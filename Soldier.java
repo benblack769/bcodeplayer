@@ -16,17 +16,17 @@ public class Soldier extends BaseRobot{
         // See if there are any nearby enemy robots
         RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
 
-        // Move randomly
-        tryMove(randomDirection());
+        if(!moveOpti()){
+            // Move randomly
+            tryMove(randomDirection());
+        }
         // If there are some...
         if (robots.length > 0) {
             // And we have enough bullets, and haven't attacked yet this turn...
-            if (rc.canFirePentadShot()) {
+            if (rc.canFireSingleShot()) {
                 // ...Then fire a bullet in the direction of the enemy.
                 rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
             }
         }
-
-
     }
 }
