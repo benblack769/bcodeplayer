@@ -26,9 +26,9 @@ public class Archon extends BaseRobot {
         rc.broadcast(1,(int)myLocation.y);
     }
     void produce_gardener() throws GameActionException{
-        final int disired_begin_gardeners = 3;
+        final int disired_begin_gardeners = 6;
         if(num_begin_gardeners * num_archons <= disired_begin_gardeners ||
-                Math.random() < 0.01){
+                Math.random() < 0.03){
             if(tryHireGardenerRand()){
                 num_begin_gardeners++;
             }

@@ -47,7 +47,7 @@ public class Gardener extends BaseRobot{
     }
     void produce_soldiers()throws GameActionException{
         if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 0 ||
-                (rc.getTeamBullets() > 1000 && Math.random() < 0.05)){
+                (rc.getTeamBullets() > 1000 && Math.random() < 0.01)){
             tryBuildRand(RobotType.SOLDIER);
         }
     }
