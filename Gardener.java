@@ -6,26 +6,48 @@ public class Gardener extends BaseRobot{
         super(rc);
     }
 
+    boolean tree_built = false;
+    int wander_timer = 20;
     @Override
     public void run() throws GameActionException {
+        super.run();
 
         // Listen for home archon's location
         int xPos = rc.readBroadcast(0);
         int yPos = rc.readBroadcast(1);
-        MapLocation archonLoc = new MapLocation(xPos,yPos);
+        MapLocation archonLoc = new MapLocation(xPos, yPos);
 
-        // Generate a random direction
-        Direction dir = randomDirection();
-
-        // Randomly attempt to build a soldier or lumberjack in this direction
-        if (rc.canBuildRobot(RobotType.SOLDIER, dir) && Math.random() < .01) {
-            rc.buildRobot(RobotType.SOLDIER, dir);
-        } else if (rc.canBuildRobot(RobotType.LUMBERJACK, dir) && Math.random() < .01 && rc.isBuildReady()) {
-            rc.buildRobot(RobotType.LUMBERJACK, dir);
+        if (wander_timer > 0) {
+            if (buildTreeRand()) {
+                tree_built = true;
+            }
+            wander_timer--;
         }
+        water_tree();
+        produce_soldiers();
 
         // Move randomly
-        tryMove(randomDirection());
-
+        if(!tree_built){
+            tryMove(randomDirection());
+        }
+    }
+    boolean water_tree() throws GameActionException{
+        if(!rc.canWater()){
+            return false;
+        }
+        for(TreeInfo tinf : rc.senseNearbyTrees(2,rc.getTeam())){
+            rc.setIndicatorLine(rc.getLocation(),tinf.getLocation(),0,0,0);
+            if(tinf.health <= tinf.maxHealth - GameConstants.WATER_HEALTH_REGEN_RATE){
+                rc.water(tinf.ID);
+                return true;
+            }
+        }
+        return false;
+    }
+    void produce_soldiers()throws GameActionException{
+        if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 0 ||
+                (rc.getTeamBullets() > 1000 && Math.random() < 0.05)){
+            tryBuildRand(RobotType.SOLDIER);
+        }
     }
 }

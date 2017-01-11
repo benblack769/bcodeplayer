@@ -3,19 +3,19 @@ package benplayer;
 import battlecode.common.*;
 
 public class Archon extends BaseRobot {
-    public Archon(RobotController rc) {
-        super(rc);
+    int num_archons;
+    int num_begin_gardeners = 0;
+    public Archon(RobotController inrc) {
+        super(inrc);
+        num_archons = rc.getInitialArchonLocations(rc.getTeam()).length;
     }
 
     @Override
     public void run()throws GameActionException  {
-        // Generate a random direction
-        Direction dir = randomDirection();
+        super.run();
+        donate_extra_bullets();
 
-        // Randomly attempt to build a gardener in this direction
-        if (rc.canHireGardener(dir) && Math.random() < .01) {
-            rc.hireGardener(dir);
-        }
+        produce_gardener();
 
         // Move randomly
         tryMove(randomDirection());
@@ -24,5 +24,14 @@ public class Archon extends BaseRobot {
         MapLocation myLocation = rc.getLocation();
         rc.broadcast(0,(int)myLocation.x);
         rc.broadcast(1,(int)myLocation.y);
+    }
+    void produce_gardener() throws GameActionException{
+        final int disired_begin_gardeners = 3;
+        if(num_begin_gardeners * num_archons <= disired_begin_gardeners ||
+                Math.random() < 0.01){
+            if(tryHireGardenerRand()){
+                num_begin_gardeners++;
+            }
+        }
     }
 }
