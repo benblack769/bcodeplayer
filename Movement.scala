@@ -1,4 +1,4 @@
-package benplayer
+package befplayer
 
 import battlecode.common._
 import sun.security.util.Length

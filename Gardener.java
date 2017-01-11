@@ -1,4 +1,4 @@
-package benplayer;
+package befplayer;
 import battlecode.common.*;
 
 public class Gardener extends BaseRobot{
