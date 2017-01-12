@@ -1,6 +1,5 @@
 package benplayer;
 import battlecode.common.*;
-import battlecode.world.TeamInfo;
 
 public class Gardener extends BaseRobot{
     public Gardener(RobotController inrc) {
@@ -42,21 +41,24 @@ public class Gardener extends BaseRobot{
         }
     }
     void avoid_directions_blocked()throws GameActionException{
-        final int dir_cnt = 20;
+        final int dir_cnt = 10;
         final MapLocation cen = rc.getLocation();
         Direction dir = new Direction(0);
         for(int i = 0; i < dir_cnt; i++){
             dir = dir.rotateLeftRads((float)(Math.PI * 2 / dir_cnt));
             MapLocation loc = cen.add(dir);
             if(!rc.isLocationOccupiedByTree(loc)){
-                movement.add_liniar_pull(loc,Const.GAR_WAND_BLOCKED_VAL);
+                movement.addLiniarPull(loc,Const.GAR_WAND_BLOCKED_VAL);
             }
+            //visualize signt radii
+            //rc.setIndicatorDot(cen.add(dir,RobotType.SOLDIER.bulletSightRadius),255,255,255);
+            //rc.setIndicatorDot(cen.add(dir,RobotType.SOLDIER.sensorRadius),0,0,255);
         }
     }
     void set_wander_movement() throws GameActionException{
         avoid_directions_blocked();
         for(MapLocation aloc : nearbyArchons()){
-            movement.add_liniar_pull(aloc,Const.GAR_WAND_ARCHON_AVOID);
+            movement.addLiniarPull(aloc,Const.GAR_WAND_ARCHON_AVOID);
         }
     }
     boolean water_tree() throws GameActionException{
@@ -64,7 +66,7 @@ public class Gardener extends BaseRobot{
             return false;
         }
         for(TreeInfo tinf : rc.senseNearbyTrees(2,rc.getTeam())){
-            rc.setIndicatorLine(rc.getLocation(),tinf.getLocation(),0,0,0);
+            //rc.setIndicatorLine(rc.getLocation(),tinf.getLocation(),0,0,0);
             if(tinf.health <= tinf.maxHealth - GameConstants.WATER_HEALTH_REGEN_RATE){
                 rc.water(tinf.ID);
                 return true;

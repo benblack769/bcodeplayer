@@ -47,7 +47,7 @@ public class Lumberjack extends BaseRobot {
                 rc.chop(tree.ID);
             }
             float dis_tree = rc.getLocation().distanceTo(tree.location);
-            movement.add_liniar_pull(tree.location,Const.LUMBER_TREE_LOC_BASE/dis_tree);
+            movement.addLiniarPull(tree.location,Const.LUMBER_TREE_LOC_BASE/dis_tree);
         }
     }
 }

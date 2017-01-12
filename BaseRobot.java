@@ -2,16 +2,23 @@ package benplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class BaseRobot {
-    static RobotController rc;
-    static Movement movement;
+    RobotController rc;
+    Movement movement;
+    RobotType mytype;
+    Team myteam;
+    Team enemy;
+    MapLocation[] rand_move_points;
     public BaseRobot(RobotController inrc){
         rc = inrc;
+        mytype = rc.getType();
+        myteam = rc.getTeam();
+        enemy = myteam.opponent();
+        rand_move_points = movementPoints();
     }
     public void run() throws GameActionException {
-        movement = new Movement(rc.getLocation(),rc.getType().strideRadius);
+        movement = new Movement(rc.getLocation(),mytype.strideRadius,mytype.bodyRadius,Const.damage_value(mytype));
         donate_extra_bullets();
         space_robots();
         small_rand_pull();
@@ -75,7 +82,12 @@ public class BaseRobot {
         return false;
     }
     boolean moveOpti()throws GameActionException{
-        final MapLocation opt_point = movement.best_point();
+        rc.setIndicatorDot(rc.getLocation(),0,255,0);
+        final MapLocation opt_point = movement.bestPoint(rand_move_points);
+        if(Clock.getBytecodesLeft() < 2000){
+            rc.setIndicatorDot(rc.getLocation(),255,0,0);
+        }
+        rc.setIndicatorDot(opt_point,0,255,0);
         if(rc.canMove(opt_point)){
             rc.move(opt_point);
             return true;
@@ -88,13 +100,13 @@ public class BaseRobot {
         for(RobotInfo r : rc.senseNearbyRobots(-1,rc.getTeam())){
             float dis = myloc.distanceTo(r.location);
             if(dis < 3){
-                movement.add_liniar_pull(r.location,Const.TROOP_SPACE_VAL/dis);
+                movement.addLiniarPull(r.location,Const.TROOP_SPACE_VAL/dis);
             }
         }
     }
     void small_rand_pull(){
         MapLocation loc = rc.getLocation().add(randomDirection(),50);
-        movement.add_liniar_pull(loc,Const.SMALL_RAND_VAL);
+        movement.addLiniarPull(loc,Const.SMALL_RAND_VAL);
     }
 
     boolean tryBuildRand(RobotType rty)throws GameActionException{
@@ -168,8 +180,8 @@ public class BaseRobot {
         return (float)(Math.random()) * dis + min;
     }
     MapLocation[] movementPoints(){
-        final int edge_points = 15;
-        final int cen_points = 50;
+        final int edge_points = 30;
+        final int cen_points = 20;
         final int tot_points = edge_points + cen_points;
         final float movedis = rc.getType().strideRadius;
 
@@ -215,7 +227,7 @@ public class BaseRobot {
          * @param bullet The bullet in question
          * @return True if the line of the bullet's path intersects with this robot's current position.
          */
-    static boolean willCollideWithMe(BulletInfo bullet) {
+    boolean willCollideWithMe(BulletInfo bullet) {
         MapLocation myLocation = rc.getLocation();
 
         // Get relevant bullet information
