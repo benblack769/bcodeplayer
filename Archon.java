@@ -4,7 +4,7 @@ import battlecode.common.*;
 
 public class Archon extends BaseRobot {
     int num_archons;
-    int num_begin_gardeners = 0;
+    int num_prod_garden = 0;
     public Archon(RobotController inrc) {
         super(inrc);
         num_archons = rc.getInitialArchonLocations(rc.getTeam()).length;
@@ -25,12 +25,15 @@ public class Archon extends BaseRobot {
         rc.broadcast(0,(int)myLocation.x);
         rc.broadcast(1,(int)myLocation.y);
     }
-    void produce_gardener() throws GameActionException{
+    void produce_gardener() throws GameActionException {
         final int disired_begin_gardeners = 6;
-        if(num_begin_gardeners * num_archons <= disired_begin_gardeners ||
-                Math.random() < 0.03){
+        final int desired_middle_gardener = 15;
+        if(num_prod_garden * num_archons <= disired_begin_gardeners ||
+                Math.random() < 0.03 ||
+                (num_prod_garden * num_archons <= desired_middle_gardener
+                        && rc.getTeamBullets() > 500)){
             if(tryHireGardenerRand()){
-                num_begin_gardeners++;
+                num_prod_garden++;
             }
         }
     }
