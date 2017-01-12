@@ -1,10 +1,6 @@
 package benplayer;
 
 import battlecode.common.*;
-
-/**
- * Created by benblack on 1/11/2017.
- */
 public class Lumberjack extends BaseRobot {
     public Lumberjack(RobotController inrc){
         super(inrc);

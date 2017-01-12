@@ -7,7 +7,7 @@ public class Gardener extends BaseRobot{
     }
 
     boolean tree_built = false;
-    int wander_timer = 1;
+    int wander_timer = 30;
     boolean built_lumberjack = false;
     @Override
     public void run() throws GameActionException {
@@ -55,11 +55,15 @@ public class Gardener extends BaseRobot{
             //rc.setIndicatorDot(cen.add(dir,RobotType.SOLDIER.sensorRadius),0,0,255);
         }
     }
+
+    void avoidArchons() throws GameActionException {
+        for(MapLocation aloc : nearbyArchons()){
+            movement.addLiniarPull(aloc,-Const.GAR_WAND_ARCHON_AVOID);
+        }
+    }
     void set_wander_movement() throws GameActionException{
         avoid_directions_blocked();
-        for(MapLocation aloc : nearbyArchons()){
-            movement.addLiniarPull(aloc,Const.GAR_WAND_ARCHON_AVOID);
-        }
+        avoidArchons();
     }
     boolean water_tree() throws GameActionException{
         if(!rc.canWater()){
@@ -75,8 +79,8 @@ public class Gardener extends BaseRobot{
         return false;
     }
     void produce_soldiers()throws GameActionException{
-        if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 0 ||
-                (rc.getTeamBullets() > 1000 && Math.random() < 0.01)){
+        if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 1 ||
+                (rc.getTeamBullets() > 1000 && Math.random() < 0.003)){
             tryBuildRand(RobotType.SOLDIER);
         }
     }
