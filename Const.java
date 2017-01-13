@@ -21,6 +21,7 @@ public class Const {
     //movement action constants
     static float MOVE_EFFICIENCY = 0.9f;
     static int WANDER_MEMORY_LENGTH = 2;
+    static float MIN_GAP_LENGTH = 0.4f;
 
     //helper function
     static float area(float rad){
@@ -30,4 +31,5 @@ public class Const {
         final float effective_bullet_cost = type == RobotType.ARCHON ? 1000 : type.bulletCost;
         return effective_bullet_cost/type.maxHealth;
     }
+    static float sqr(float val){return val * val;}
 }
