@@ -12,8 +12,10 @@ final public class Movement {
     BodyInfo[] blocking_objs;
 
     MapLocation liniar_pull;
+    RobotController rc;
 
-    public Movement(RobotController rc){
+    public Movement(RobotController inrc){
+        rc = inrc;
         type = rc.getType();
         speed = type.strideRadius;
         cen = rc.getLocation();
@@ -34,8 +36,9 @@ final public class Movement {
         float dis_val = value / locdis;//normalizes on distance
         liniar_pull = new MapLocation(liniar_pull.x + (loc.x - cen.x) * dis_val,liniar_pull.y + (loc.y - cen.y) * dis_val);
     }
-    MapLocation bestPoint(){
-        return cen.add(cen.directionTo(new MapLocation(cen.x + liniar_pull.x,cen.y + liniar_pull.y)),speed);
+    Direction bestDir(){
+        Direction lin_dir = cen.directionTo(new MapLocation(cen.x + liniar_pull.x,cen.y + liniar_pull.y));
+        return lin_dir;
     }
     void calc_bullet_collision_values(BulletInfo[] bullets){
         for(BulletInfo bul : bullets){

@@ -2,6 +2,10 @@ package benplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class BaseRobot {
     RobotController rc;
@@ -9,21 +13,34 @@ public class BaseRobot {
     RobotType mytype;
     Team myteam;
     Team enemy;
-    MapLocation[] rand_move_points;
+    LinkedList<MapLocation> prev_points;
+    PolyLine line;
     public BaseRobot(RobotController inrc){
         rc = inrc;
         mytype = rc.getType();
         myteam = rc.getTeam();
         enemy = myteam.opponent();
-        rand_move_points = movementPoints();
+        prev_points = new LinkedList<MapLocation>();
+        line = new PolyLine();
     }
     public void run() throws GameActionException {
         movement = new Movement(rc);
         donate_extra_bullets();
         space_robots();
         small_rand_pull();
+        line = new PolyLine();
     }
-
+    void set_wander_movement(){
+        //first calculates value
+        for(MapLocation ploc : prev_points){
+            movement.addLiniarPull(ploc, Const.WANDER_MOVE_ON_VAL);
+        }
+        //then rearanges the queue.
+        if(prev_points.size() >= Const.WANDER_MEMORY_LENGTH){
+            prev_points.pop();
+        }
+        prev_points.add(rc.getLocation());
+    }
     /**
      * Returns a random Direction
      * @return a random Direction
@@ -84,16 +101,8 @@ public class BaseRobot {
     boolean moveOpti()throws GameActionException{
         movement.calc_bullet_collision_values(rc.senseNearbyBullets());
 
-        final MapLocation opt_point = movement.bestPoint();
-        if(Clock.getBytecodesLeft() < 2000){
-            rc.setIndicatorDot(rc.getLocation(),255,0,0);
-        }
-        rc.setIndicatorDot(opt_point,0,255,0);
-        if(rc.canMove(opt_point)){
-            rc.move(opt_point);
-            return true;
-        }
-        return false;
+        final Direction opt_dir = movement.bestDir();
+        return tryMove(opt_dir);
     }
 
     void space_robots(){

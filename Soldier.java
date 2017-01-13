@@ -16,6 +16,7 @@ public class Soldier extends BaseRobot{
         // See if there are any nearby enemy robots
         RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
 
+        set_wander_movement();
         if(!moveOpti()){
             // Move randomly
             tryMove(randomDirection());

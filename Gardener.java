@@ -18,6 +18,8 @@ public class Gardener extends BaseRobot{
         int yPos = rc.readBroadcast(1);
         MapLocation archonLoc = new MapLocation(xPos, yPos);
 
+        avoid_directions_blocked();
+        avoidArchons();
         set_wander_movement();
         //builds tree if not wandering
         if (wander_timer > 0) {
@@ -60,10 +62,6 @@ public class Gardener extends BaseRobot{
         for(MapLocation aloc : nearbyArchons()){
             movement.addLiniarPull(aloc,-Const.GAR_WAND_ARCHON_AVOID);
         }
-    }
-    void set_wander_movement() throws GameActionException{
-        avoid_directions_blocked();
-        avoidArchons();
     }
     boolean water_tree() throws GameActionException{
         if(!rc.canWater()){

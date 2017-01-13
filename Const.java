@@ -16,9 +16,11 @@ public class Const {
     static float GAR_WAND_BLOCKED_VAL = 0.5f;
     static float GAR_WAND_ARCHON_AVOID = 1.0f;
     static float LUMBER_TREE_LOC_BASE = 1.0f;
+    static float WANDER_MOVE_ON_VAL = 0.5f;
 
     //movement action constants
     static float MOVE_EFFICIENCY = 0.9f;
+    static int WANDER_MEMORY_LENGTH = 2;
 
     //helper function
     static float area(float rad){
