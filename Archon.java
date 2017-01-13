@@ -29,9 +29,6 @@ public class Archon extends BaseRobot {
         rc.broadcast(0,(int)myLocation.x);
         rc.broadcast(1,(int)myLocation.y);
     }
-    void avoid_player_trees(){
-
-    }
     void produce_gardener() throws GameActionException {
         final int disired_begin_gardeners = 6;
         final int desired_middle_gardener = 15;

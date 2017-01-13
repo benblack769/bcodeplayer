@@ -33,7 +33,7 @@ public class BaseRobot {
     void set_wander_movement(){
         //first calculates value
         for(MapLocation ploc : prev_points){
-            movement.addLiniarPull(ploc, Const.WANDER_MOVE_ON_VAL);
+            movement.addLiniarPull(ploc,- Const.WANDER_MOVE_ON_VAL);
         }
         //then rearanges the queue.
         if(prev_points.size() >= Const.WANDER_MEMORY_LENGTH){

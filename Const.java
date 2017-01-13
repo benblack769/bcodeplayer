@@ -8,20 +8,22 @@ import battlecode.common.RobotType;
  */
 public class Const {
     //action constatnts
-    static float LUMBER_TREE_AREA_HIRE_PERC = 0.33f;
+    final static float LUMBER_TREE_AREA_HIRE_PERC = 0.33f;
 
     //movement value constants
-    static float TROOP_SPACE_VAL = 5f;
-    static float SMALL_RAND_VAL = 0.01f;
-    static float GAR_WAND_BLOCKED_VAL = 0.5f;
-    static float GAR_WAND_ARCHON_AVOID = 1.0f;
-    static float LUMBER_TREE_LOC_BASE = 1.0f;
-    static float WANDER_MOVE_ON_VAL = 0.5f;
+    final static float TROOP_SPACE_VAL = 5f;
+    final static float SMALL_RAND_VAL = 0.01f;
+    final static float GAR_WAND_BLOCKED_VAL = 0.5f;
+    final static float GAR_WAND_ARCHON_AVOID = 1.0f;
+    final static float LUMBER_TREE_LOC_BASE = 1.0f;
+    final static float WANDER_MOVE_ON_VAL = 0.5f;
+    final static float AVD_TREE_BASE_VAL = 0.1f;
 
     //movement action constants
-    static float MOVE_EFFICIENCY = 0.9f;
-    static int WANDER_MEMORY_LENGTH = 2;
-    static float MIN_GAP_LENGTH = 0.4f;
+    final static float MOVE_EFFICIENCY = 0.9f;
+    final static int WANDER_MEMORY_LENGTH = 2;
+    final static int CIRC_SPLIT = 10;
+    final static float[] AVD_TREE_EXP_LEVEL = {0,1.3f,1.13f};
 
     //helper function
     static float area(float rad){

@@ -32,7 +32,7 @@ final public class Movement {
         System.arraycopy(trees, 0, blocking_objs, 0, trees.length);
         System.arraycopy(robots, 0, blocking_objs, trees.length, robots.length);
 
-        calc_avoid_obsticals();
+        calc_avoid_trees();
     }
     void addLiniarPull(MapLocation loc,float value){
         float locdis = loc.distanceTo(cen);
@@ -78,52 +78,45 @@ final public class Movement {
 
         return (perpendicularDist <= type.bodyRadius);
     }
-    void calc_avoid_obsticals() throws GameActionException {
-        final float move_rad = 3*speed / Const.MIN_GAP_LENGTH;
-        final int move_len = (int)(1 + 2 * move_rad);
-        final MapLocation corner = new MapLocation(cen.x - move_rad, cen.y - move_rad);
-        /*
-        boolean[][] blocked = new boolean[move_len][move_len];
+    boolean blocked_loc(MapLocation loc) throws GameActionException {
+        return !rc.onTheMap(loc) || rc.isLocationOccupiedByTree(loc);
+    }
+    void calc_avoid_trees() throws GameActionException {
+        for(int level = 1; level <= 2; level++){
+            int dir_split = Const.CIRC_SPLIT * level;
+            float level_dis = speed * level;
+            float AVD_TREE_EXP_L = Const.AVD_TREE_EXP_LEVEL[level];
 
-        for(TreeInfo tree : trees){
-            float ylen = tree.radius + body_rad;
-
-            int ystart = Math.round((tree.location.y - ylen - corner.y) * Const.MIN_GAP_LENGTH);
-            int yend =   Math.round((tree.location.y + ylen - corner.y) * Const.MIN_GAP_LENGTH);
-
-            int yrealstart = Math.max(ystart,0);
-            int yrealend =   Math.min(yend,  move_len-1);
-
-            for(int yidx = yrealstart; yidx < yrealend; yidx++) {
-                float yloc = (yidx * Const.MIN_GAP_LENGTH) - move_rad;
-                boolean [] yblocked = blocked[yidx];
-                float xlen = (float)Math.sqrt(Const.sqr(ylen) - Const.sqr(yloc));
-
-                int xstart = Math.round((tree.location.x - xlen - corner.x) * Const.MIN_GAP_LENGTH);
-                int xend =   Math.round((tree.location.x + xlen - corner.x) * Const.MIN_GAP_LENGTH);
-                int xrealstart = Math.max(xstart,0);
-                int xrealend = Math.min(xend,move_len-1);
-                for(int xidx = xrealstart; xidx < xrealend; xidx++) {
-                    yblocked[xidx] = true;
+            Direction dir = new Direction(1,0);
+            //gets the whole thing started
+            for(int d = 0; d < dir_split; d++){
+                dir.rotateLeftDegrees(360.0f / dir_split);
+                if(!blocked_loc(cen.add(dir,level_dis))){
+                    break;
                 }
             }
-        }*/
-        for(int y = 0; y < move_len; y++){
-            for(int x = 0; x < move_len; x++){
-                float yloc = y * Const.MIN_GAP_LENGTH + corner.y;
-                float xloc = x * Const.MIN_GAP_LENGTH + corner.x;
-                MapLocation loc = new MapLocation(xloc,yloc);
-                int is_tree = rc.isLocationOccupiedByTree(loc) ? 1 : 0;
-                rc.setIndicatorDot(loc,255 * is_tree,0,0);
+            int count = 0;
+            float val_avd_tree = Const.AVD_TREE_BASE_VAL;
+            for(int d = 0; d < dir_split; d++){
+                dir.rotateLeftDegrees(360.0f / dir_split);
+                MapLocation loc = cen.add(dir,level_dis);
+                if(blocked_loc(loc)){
+                    val_avd_tree *= AVD_TREE_EXP_L;
+                    count += 1;
+                }
+                else{
+                    if(count == 0){
+                        continue;
+                    }
+                    float mid_dir_deg = (count * 0.5f * 360f) / dir_split;
+                    Direction push_dir = dir.rotateLeftDegrees(-mid_dir_deg);
+                    rc.setIndicatorDot(cen.add(push_dir),255,255,255);
+                    addLiniarPull(cen.add(push_dir),-val_avd_tree);
+
+                    count = 0;
+                    val_avd_tree = Const.AVD_TREE_BASE_VAL;
+                }
             }
         }
-    }
-    boolean is_in_tree(MapLocation loc){
-        for(TreeInfo tree:  trees){
-            if(tree.location.distanceTo(loc) < tree.radius + body_rad){
-                return true;
-            }
-        }
-        return false;
     }
 }

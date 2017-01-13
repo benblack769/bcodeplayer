@@ -7,7 +7,7 @@ public class Gardener extends BaseRobot{
     }
 
     boolean tree_built = false;
-    int wander_timer = 30;
+    int wander_timer = 10;
     boolean built_lumberjack = false;
     @Override
     public void run() throws GameActionException {
@@ -22,7 +22,7 @@ public class Gardener extends BaseRobot{
         avoidArchons();
         set_wander_movement();
         //builds tree if not wandering
-        if (wander_timer > 0) {
+        if (wander_timer < 0) {
             if (buildTreeRand()) {
                 tree_built = true;
             }
