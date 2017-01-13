@@ -16,9 +16,13 @@ public class Archon extends BaseRobot {
         donate_extra_bullets();
 
         produce_gardener();
+        set_wander_movement();
 
-        // Move randomly
-        tryMove(randomDirection());
+        //try to move optimally
+        if(!moveOpti()) {
+            // try to move randomly
+            tryMove(randomDirection());
+        }
 
         // Broadcast archon's location for other robots on the team to know
         MapLocation myLocation = rc.getLocation();

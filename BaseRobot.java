@@ -2,21 +2,45 @@ package befplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class BaseRobot {
-    static RobotController rc;
-    static Movement movement;
+    RobotController rc;
+    Movement movement;
+    RobotType mytype;
+    Team myteam;
+    Team enemy;
+    LinkedList<MapLocation> prev_points;
+    PolyLine line;
     public BaseRobot(RobotController inrc){
         rc = inrc;
+        mytype = rc.getType();
+        myteam = rc.getTeam();
+        enemy = myteam.opponent();
+        prev_points = new LinkedList<MapLocation>();
+        line = new PolyLine();
     }
     public void run() throws GameActionException {
-        movement = new Movement(rc.getLocation(),rc.getType().strideRadius);
+        movement = new Movement(rc);
         donate_extra_bullets();
         space_robots();
         small_rand_pull();
+        line = new PolyLine();
     }
-
+    void set_wander_movement(){
+        //first calculates value
+        for(MapLocation ploc : prev_points){
+            movement.addLiniarPull(ploc,- Const.WANDER_MOVE_ON_VAL);
+        }
+        //then rearanges the queue.
+        if(prev_points.size() >= Const.WANDER_MEMORY_LENGTH){
+            prev_points.pop();
+        }
+        prev_points.add(rc.getLocation());
+    }
     /**
      * Returns a random Direction
      * @return a random Direction
@@ -75,12 +99,10 @@ public class BaseRobot {
         return false;
     }
     boolean moveOpti()throws GameActionException{
-        final MapLocation opt_point = movement.best_point();
-        if(rc.canMove(opt_point)){
-            rc.move(opt_point);
-            return true;
-        }
-        return false;
+        movement.calc_bullet_collision_values(rc.senseNearbyBullets());
+
+        final Direction opt_dir = movement.bestDir();
+        return tryMove(opt_dir);
     }
 
     void space_robots(){
@@ -88,13 +110,13 @@ public class BaseRobot {
         for(RobotInfo r : rc.senseNearbyRobots(-1,rc.getTeam())){
             float dis = myloc.distanceTo(r.location);
             if(dis < 3){
-                movement.add_liniar_pull(r.location,Const.TROOP_SPACE_VAL/dis);
+                movement.addLiniarPull(r.location,Const.TROOP_SPACE_VAL/dis);
             }
         }
     }
     void small_rand_pull(){
         MapLocation loc = rc.getLocation().add(randomDirection(),50);
-        movement.add_liniar_pull(loc,Const.SMALL_RAND_VAL);
+        movement.addLiniarPull(loc,Const.SMALL_RAND_VAL);
     }
 
     boolean tryBuildRand(RobotType rty)throws GameActionException{
@@ -168,8 +190,8 @@ public class BaseRobot {
         return (float)(Math.random()) * dis + min;
     }
     MapLocation[] movementPoints(){
-        final int edge_points = 15;
-        final int cen_points = 50;
+        final int edge_points = 1;
+        final int cen_points = 1;
         final int tot_points = edge_points + cen_points;
         final float movedis = rc.getType().strideRadius;
 
@@ -215,29 +237,5 @@ public class BaseRobot {
          * @param bullet The bullet in question
          * @return True if the line of the bullet's path intersects with this robot's current position.
          */
-    static boolean willCollideWithMe(BulletInfo bullet) {
-        MapLocation myLocation = rc.getLocation();
 
-        // Get relevant bullet information
-        Direction propagationDirection = bullet.dir;
-        MapLocation bulletLocation = bullet.location;
-
-        // Calculate bullet relations to this robot
-        Direction directionToRobot = bulletLocation.directionTo(myLocation);
-        float distToRobot = bulletLocation.distanceTo(myLocation);
-        float theta = propagationDirection.radiansBetween(directionToRobot);
-
-        // If theta > 90 degrees, then the bullet is traveling away from us and we can break early
-        if (Math.abs(theta) > Math.PI/2) {
-            return false;
-        }
-
-        // distToRobot is our hypotenuse, theta is our angle, and we want to know this length of the opposite leg.
-        // This is the distance of a line that goes from myLocation and intersects perpendicularly with propagationDirection.
-        // This corresponds to the smallest radius circle centered at our location that would intersect with the
-        // line that is the path of the bullet.
-        float perpendicularDist = (float)Math.abs(distToRobot * Math.sin(theta)); // soh cah toa :)
-
-        return (perpendicularDist <= rc.getType().bodyRadius);
-    }
 }
