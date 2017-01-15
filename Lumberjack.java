@@ -49,14 +49,16 @@ public class Lumberjack extends BaseRobot {
         float base_val = Const.LUMBER_TREE_LOC_BASE;
         return dis_tree * dis_tree_val * tree_healt_val * tree_size_val * base_val;
     }
-    void chop_best_tree()throws GameActionException {
+    void chop_best_tree() throws GameActionException {
         TreeInfo besttree = null;
         float bestval = -10e10f;
         for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)) {
-            float tval = tree_chop_val(tree);
-            if(tval > bestval){
-                bestval = tval;
-                besttree = tree;
+            if(rc.canChop(tree.ID)) {
+                float tval = tree_chop_val(tree);
+                if (tval > bestval) {
+                    bestval = tval;
+                    besttree = tree;
+                }
             }
         }
         if (besttree != null && rc.canChop(besttree.ID)) {

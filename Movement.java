@@ -55,6 +55,13 @@ final public class Movement {
             }
         }
     }
+    /**
+     * A slightly more complicated example function, this returns true if the given bullet is on a collision
+     * course with the current robot. Doesn't take into account objects between the bullet and this robot.
+     *
+     * @param bullet The bullet in question
+     * @return True if the line of the bullet's path intersects with this robot's current position.
+     */
     boolean willCollideWithMe(BulletInfo bullet,MapLocation loc) {
         // Get relevant bullet information
         Direction propagationDirection = bullet.dir;
