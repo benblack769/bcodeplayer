@@ -21,7 +21,7 @@ final public class Movement {
         speed = type.strideRadius;
         cen = rc.getLocation();
         body_rad = type.bodyRadius;
-        damage_value = Const.damage_value(type);
+        damage_value = Const.damageValue(type,rc.getHealth());
 
         trees = rc.senseNearbyTrees();
         RobotInfo[] robots = rc.senseNearbyRobots();
@@ -84,7 +84,7 @@ final public class Movement {
     void calc_avoid_trees() throws GameActionException {
         for(int level = 1; level <= 2; level++){
             int dir_split = Const.CIRC_SPLIT * level;
-            float level_dis = speed * level;
+            float level_dis = body_rad + (speed * level);
             float AVD_TREE_EXP_L = Const.AVD_TREE_EXP_LEVEL[level];
 
             Direction dir = new Direction(1,0);

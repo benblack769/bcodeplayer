@@ -36,14 +36,36 @@ public class Lumberjack extends BaseRobot {
                 }
             }
         }
+        chop_best_tree();
     }
-    public void move_to_tree() throws GameActionException {
-        for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)){
-            if(rc.canChop(tree.ID)){
-                rc.chop(tree.ID);
+    float tree_chop_val(TreeInfo tree){
+        //prioritizes close trees over far ones
+        float dis_tree = rc.getLocation().distanceTo(tree.location);
+        float dis_tree_val = 1/dis_tree;
+        //prioritizes unheathy trees over healthy ones
+        float tree_healt_val = tree.maxHealth / tree.health;
+        //prioritizes large trees over small ones
+        float tree_size_val = Const.area(tree.radius);
+        float base_val = Const.LUMBER_TREE_LOC_BASE;
+        return dis_tree * dis_tree_val * tree_healt_val * tree_size_val * base_val;
+    }
+    void chop_best_tree()throws GameActionException {
+        TreeInfo besttree = null;
+        float bestval = -10e10f;
+        for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)) {
+            float tval = tree_chop_val(tree);
+            if(tval > bestval){
+                bestval = tval;
+                besttree = tree;
             }
-            float dis_tree = rc.getLocation().distanceTo(tree.location);
-            movement.addLiniarPull(tree.location,Const.LUMBER_TREE_LOC_BASE/dis_tree);
+        }
+        if (besttree != null && rc.canChop(besttree.ID)) {
+            rc.chop(besttree.ID);
+        }
+    }
+    void move_to_tree() throws GameActionException {
+        for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)){
+            movement.addLiniarPull(tree.location,tree_chop_val(tree));
         }
     }
 }

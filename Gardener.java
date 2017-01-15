@@ -21,17 +21,20 @@ public class Gardener extends BaseRobot{
         avoid_directions_blocked();
         avoidArchons();
         set_wander_movement();
-        //builds tree if not wandering
+
+        water_tree();
+        produce_soldiers();
+
+        //builds tree if not wandering make sure this happens after troop production
         if (wander_timer < 0) {
-            if (buildTreeRand()) {
+            produce_lumberjack();
+            if (!should_produce_lumberjack()
+                    && buildTreeRand()) {
                 tree_built = true;
             }
         }else{
             wander_timer--;
         }
-        water_tree();
-        produce_soldiers();
-        produce_lumberjack();
 
         //if not sticking to tree, then move
         if(!tree_built){
@@ -89,9 +92,12 @@ public class Gardener extends BaseRobot{
         }
         return areasum;
     }
-    void produce_lumberjack() throws GameActionException {
+    boolean should_produce_lumberjack(){
         float neut_tree_percent = neutral_tree_area() / Const.area(rc.getType().sensorRadius);
-        if(!built_lumberjack && neut_tree_percent > Const.LUMBER_TREE_AREA_HIRE_PERC){
+        return !built_lumberjack && neut_tree_percent > Const.LUMBER_TREE_AREA_HIRE_PERC;
+    }
+    void produce_lumberjack() throws GameActionException {
+        if(should_produce_lumberjack()){
             if(tryBuildRand(RobotType.LUMBERJACK)){
                 built_lumberjack = true;
             }

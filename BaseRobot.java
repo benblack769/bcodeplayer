@@ -2,10 +2,7 @@ package benplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Queue;
 import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class BaseRobot {
     RobotController rc;
@@ -28,6 +25,7 @@ public class BaseRobot {
         donate_extra_bullets();
         space_robots();
         small_rand_pull();
+        add_chase_val();
         line = new PolyLine();
     }
     void set_wander_movement(){
@@ -123,8 +121,7 @@ public class BaseRobot {
         if(!rc.hasRobotBuildRequirements(rty)){
             return false;
         }
-        int rand_checks = 10;
-        for(int i = 0; i < rand_checks; i++){
+        for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
             Direction build_dir = randomDirection();
             if(rc.canBuildRobot(rty,build_dir)){
                 rc.buildRobot(rty,build_dir);
@@ -137,8 +134,7 @@ public class BaseRobot {
         if(!rc.hasRobotBuildRequirements(RobotType.GARDENER)){
             return false;
         }
-        int rand_checks = 10;
-        for(int i = 0; i < rand_checks; i++){
+        for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
             Direction build_dir = randomDirection();
             if(rc.canHireGardener(build_dir)){
                 rc.hireGardener(build_dir);
@@ -172,8 +168,7 @@ public class BaseRobot {
         //makes sure that trees are not planted too close to the archon, hopefully not locking the archon into a hole
 
         MapLocation[] archonlocs = nearbyArchons();
-        final int tree_build_tries = 10;
-        for(int i = 0; i < tree_build_tries; i++){
+        for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
             Direction dir = randomDirection();
             MapLocation build_loc = rc.getLocation().add(dir);
 
@@ -219,7 +214,13 @@ public class BaseRobot {
         }
         return allps;
     }
-
+    void add_chase_val()throws GameActionException{
+        for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){
+            float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,(float)rob.health,rob.location);
+            float chased_val = Const.chase_val(rob.type,(float)rob.health,rob.location,mytype,rc.getHealth(),rc.getLocation());
+            movement.addLiniarPull(rob.location,chase_val - chased_val);
+        }
+    }
     void donate_extra_bullets()throws GameActionException{
         final float max_store_bullets = 2000;
         float donate_bullets = rc.getTeamBullets() - max_store_bullets;
