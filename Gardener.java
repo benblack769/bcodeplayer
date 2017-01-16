@@ -60,10 +60,10 @@ public class Gardener extends BaseRobot{
             dir = dir.rotateLeftRads(rad_between);
             MapLocation loc = cen.add(dir,outer_rad);
             boolean this_blocked = isCircleOccupiedByTreeRoughly(loc,1.0f);
-            rc.setIndicatorDot(loc,255,255,255);
-            if(this_blocked){
-                rc.setIndicatorDot(loc,255,0,0);
-            }
+            //rc.setIndicatorDot(loc,255,255,255);
+            //if(this_blocked){
+            //    rc.setIndicatorDot(loc,255,0,0);
+            //}
             if(this_blocked && !prev_blocked){
                 if(some_chunk_blocked){
                     res = true;
@@ -131,7 +131,7 @@ public class Gardener extends BaseRobot{
         return false;
     }
     void produce_soldiers()throws GameActionException{
-        if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 1 ||
+        if(rc.senseNearbyRobots(-1,enemy).length > 1 ||
                 (rc.getTeamBullets() > 1000 && Math.random() < 0.9)){
             tryBuildRand(RobotType.SOLDIER);
         }

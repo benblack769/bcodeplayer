@@ -6,6 +6,9 @@ public class Const {
     //action constatnts
     final static float LUMBER_TREE_AREA_HIRE_PERC = 0.33f;
 
+    //attackc constants
+    final static float FRIENDLY_FIRE_VAL = 0.25f;
+
     //movement value constants
     final static float TROOP_SPACE_VAL = 5f;
     final static float SMALL_RAND_VAL = 0.01f;
@@ -35,17 +38,16 @@ public class Const {
         return (float)(Math.PI) * rad * rad;
     }
     static float effectiveBulletCost(RobotType type){
-        final float effective_bullet_cost = type == RobotType.ARCHON ? 1000 : type.bulletCost;
+        final float effective_bullet_cost = type == RobotType.ARCHON ? 600.0f : type.bulletCost;
         return effective_bullet_cost;
     }
     static float sqr(float val){return val * val;}
     static float damageValue(RobotType type,float health){
-        float low_health_val = 1 / (10 + health);
-        float is_archon_bonus = type == RobotType.ARCHON ? 2 : 1;
+        float low_health_val = 1.0f / (10.0f + health);
         float bullet_cost_val = Const.effectiveBulletCost(type);
-        float is_scout_bonus = type == RobotType.SCOUT ? 3f : 1;
+        float is_scout_bonus = type == RobotType.SCOUT ? 2f : 1;
 
-        return low_health_val * is_archon_bonus * bullet_cost_val * is_scout_bonus;
+        return low_health_val * bullet_cost_val * is_scout_bonus;
     }
     static float chase_val(RobotType chaser_ty,float chaser_h,MapLocation chaser_loc,RobotType chased_ty,float chased_h,MapLocation chased_loc){
         if(!chaser_ty.canAttack()){
