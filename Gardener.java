@@ -12,17 +12,13 @@ public class Gardener extends BaseRobot{
     public void run() throws GameActionException {
         super.run();
 
-        // Listen for home archon's location
-        int xPos = rc.readBroadcast(0);
-        int yPos = rc.readBroadcast(1);
-        MapLocation archonLoc = new MapLocation(xPos, yPos);
-
         avoidArchons();
         set_wander_movement();
 
         water_tree();
+        produce_lumberjack();
         //builds tree if not wandering make sure this happens after troop production
-        if(should_produce_lumberjack() && !produce_lumberjack()) {
+        if(!should_produce_lumberjack()) {
             if (!location_blocks_two_paths()) {
                 if ((7 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
                     buildTree();
@@ -136,7 +132,7 @@ public class Gardener extends BaseRobot{
     }
     void produce_soldiers()throws GameActionException{
         if(rc.senseNearbyRobots(-1,rc.getTeam().opponent()).length > 1 ||
-                (rc.getTeamBullets() > 1000 && Math.random() < 0.003)){
+                (rc.getTeamBullets() > 1000 && Math.random() < 0.9)){
             tryBuildRand(RobotType.SOLDIER);
         }
     }

@@ -161,10 +161,13 @@ public class BaseRobot {
         }
         return false;
     }
+    void move_to_shake_tree() throws GameActionException{
+
+    }
     void add_chase_val()throws GameActionException{
         for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){
-            float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,(float)rob.getHealth(),rob.location);
-            float chased_val = Const.chase_val(rob.type,(float)rob.getHealth(),rob.location,mytype,rc.getHealth(),rc.getLocation());
+            float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,rob.health,rob.location);
+            float chased_val = Const.chase_val(rob.type,rob.health,rob.location,mytype,rc.getHealth(),rc.getLocation());
             movement.addLiniarPull(rob.location,chase_val - chased_val);
         }
     }

@@ -23,11 +23,6 @@ public class Archon extends BaseRobot {
             // try to move randomly
             tryMove(randomDirection());
         }
-
-        // Broadcast archon's location for other robots on the team to know
-        MapLocation myLocation = rc.getLocation();
-        rc.broadcast(0,(int)myLocation.x);
-        rc.broadcast(1,(int)myLocation.y);
     }
     void produce_gardener() throws GameActionException {
         final int disired_begin_gardeners = 6;
