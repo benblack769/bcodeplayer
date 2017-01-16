@@ -26,6 +26,10 @@ public class Const {
     final static int RAND_BUILD_TRIES = 20;
     final static int MIN_TREE_OPENINGS = 4;
 
+    //message indicies
+    final static int IS_DENSE_MAP = 0;
+    final static int SCOUTS_PESTERING = 1;
+
     //helper function
     static float area(float rad){
         return (float)(Math.PI) * rad * rad;
@@ -39,8 +43,9 @@ public class Const {
         float low_health_val = 1 / (10 + health);
         float is_archon_bonus = type == RobotType.ARCHON ? 2 : 1;
         float bullet_cost_val = Const.effectiveBulletCost(type);
+        float is_scout_bonus = type == RobotType.SCOUT ? 3f : 1;
 
-        return low_health_val * is_archon_bonus * bullet_cost_val;
+        return low_health_val * is_archon_bonus * bullet_cost_val * is_scout_bonus;
     }
     static float chase_val(RobotType chaser_ty,float chaser_h,MapLocation chaser_loc,RobotType chased_ty,float chased_h,MapLocation chased_loc){
         if(!chaser_ty.canAttack()){

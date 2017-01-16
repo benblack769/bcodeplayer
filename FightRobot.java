@@ -24,13 +24,13 @@ public class FightRobot extends  BaseRobot{
         // If there are some...
         if (robots.length > 0) {
             // And we have enough bullets, and haven't attacked yet this turn...
-            if (rc.canFireSingleShot()) {
+            if (rc.canFirePentadShot()) {
                 // ...Then fire a bullet in the direction of the enemy.
-                rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+                rc.firePentadShot(rc.getLocation().directionTo(robots[0].location));
             }
         }
     }
-    float robot_damage_value(RobotInfo rob){
-        return Const.damageValue(rob.type,(float)rob.health);
+    void go_to_scout_pester(){
+
     }
 }
