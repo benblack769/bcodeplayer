@@ -161,63 +161,10 @@ public class BaseRobot {
         }
         return false;
     }
-    boolean buildTreeRand() throws GameActionException{
-        if(!rc.hasTreeBuildRequirements()) {
-            return false;
-        }
-        //makes sure that trees are not planted too close to the archon, hopefully not locking the archon into a hole
-
-        MapLocation[] archonlocs = nearbyArchons();
-        for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
-            Direction dir = randomDirection();
-            MapLocation build_loc = rc.getLocation().add(dir);
-
-            if(rc.canPlantTree(dir) &&
-                    !is_too_close(build_loc,archonlocs,8.0f)){
-                rc.plantTree(dir);
-                return true;
-            }
-        }
-        return false;
-    }
-    static float randInRange(float min, float max){
-        final float dis = max - min;
-        return (float)(Math.random()) * dis + min;
-    }
-    MapLocation[] movementPoints(){
-        final int edge_points = 1;
-        final int cen_points = 1;
-        final int tot_points = edge_points + cen_points;
-        final float movedis = rc.getType().strideRadius;
-
-        MapLocation[] allps = new MapLocation[tot_points];
-
-        MapLocation cen = rc.getLocation();
-
-        //gets random points around edges
-        Direction west = new Direction(1,0);
-        for(int i = 0; i < edge_points; i++){
-            Direction rdir = west.rotateLeftRads(randInRange(0,(float)(Math.PI)));
-            allps[i] = cen.add(rdir,movedis);
-        }
-        //gets random points in middle
-        for(int j = cen_points; j < tot_points; j++){
-            while(true){
-                Float x = randInRange(cen.x - movedis,cen.x + movedis);
-                Float y = randInRange(cen.y - movedis,cen.y + movedis);
-                MapLocation loc = new MapLocation(x,y);
-                if(loc.distanceTo(cen) < movedis){
-                    allps[j] = loc;
-                    break;
-                }
-            }
-        }
-        return allps;
-    }
     void add_chase_val()throws GameActionException{
         for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){
-            float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,(float)rob.health,rob.location);
-            float chased_val = Const.chase_val(rob.type,(float)rob.health,rob.location,mytype,rc.getHealth(),rc.getLocation());
+            float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,(float)rob.getHealth(),rob.location);
+            float chased_val = Const.chase_val(rob.type,(float)rob.getHealth(),rob.location,mytype,rc.getHealth(),rc.getLocation());
             movement.addLiniarPull(rob.location,chase_val - chased_val);
         }
     }

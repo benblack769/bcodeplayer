@@ -2,8 +2,11 @@ package benplayer;
 
 import battlecode.common.*;
 public class Lumberjack extends BaseRobot {
+    MapLocation origin;
+
     public Lumberjack(RobotController inrc){
         super(inrc);
+        origin = rc.getLocation();
     }
 
     @Override
@@ -41,13 +44,14 @@ public class Lumberjack extends BaseRobot {
     float tree_chop_val(TreeInfo tree){
         //prioritizes close trees over far ones
         float dis_tree = rc.getLocation().distanceTo(tree.location);
-        float dis_tree_val = 1/dis_tree;
+        float dis_tree_val = 0.2f / dis_tree;
         //prioritizes unheathy trees over healthy ones
         float tree_healt_val = tree.maxHealth / tree.health;
         //prioritizes large trees over small ones
         float tree_size_val = Const.area(tree.radius);
         float base_val = Const.LUMBER_TREE_LOC_BASE;
-        return dis_tree * dis_tree_val * tree_healt_val * tree_size_val * base_val;
+        float closeness_to_origin = 1 / tree.location.distanceTo(origin);
+        return dis_tree * dis_tree_val * tree_healt_val * tree_size_val * base_val * closeness_to_origin;
     }
     void chop_best_tree() throws GameActionException {
         TreeInfo besttree = null;
