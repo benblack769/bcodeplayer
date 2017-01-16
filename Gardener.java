@@ -7,7 +7,6 @@ public class Gardener extends BaseRobot{
     }
 
     boolean tree_built = false;
-    int wander_timer = 10;
     boolean built_lumberjack = false;
     @Override
     public void run() throws GameActionException {
@@ -18,23 +17,23 @@ public class Gardener extends BaseRobot{
         int yPos = rc.readBroadcast(1);
         MapLocation archonLoc = new MapLocation(xPos, yPos);
 
-        avoid_directions_blocked();
         avoidArchons();
         set_wander_movement();
 
         water_tree();
-        produce_soldiers();
-
         //builds tree if not wandering make sure this happens after troop production
-        if (wander_timer < 0) {
-            produce_lumberjack();
-            if (!should_produce_lumberjack()
-                    && buildTreeRand()) {
-                tree_built = true;
+        if(should_produce_lumberjack() && !produce_lumberjack()) {
+            if (!location_blocks_two_paths()) {
+                if ((7 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
+                    buildTree();
+                    tree_built = true;
+                }
             }
-        }else{
-            wander_timer--;
+            if (tree_built && 7 - encircled_loc_count() > 1) {
+                buildTree();
+            }
         }
+        produce_soldiers();
 
         //if not sticking to tree, then move
         if(!tree_built){
@@ -45,20 +44,76 @@ public class Gardener extends BaseRobot{
             }
         }
     }
-    void avoid_directions_blocked()throws GameActionException{
-        final int dir_cnt = 10;
+    boolean isCircleOccupiedByTreeRoughly(MapLocation loc,float radius) throws GameActionException {
+        return rc.onTheMap(loc) && rc.isCircleOccupiedExceptByThisRobot(loc,radius) && !rc.isLocationOccupiedByRobot(loc);
+    }
+    boolean location_blocks_two_paths() throws GameActionException{
         final MapLocation cen = rc.getLocation();
         Direction dir = new Direction(0);
-        for(int i = 0; i < dir_cnt; i++){
-            dir = dir.rotateLeftRads((float)(Math.PI * 2 / dir_cnt));
-            MapLocation loc = cen.add(dir);
-            if(!rc.isLocationOccupiedByTree(loc)){
-                movement.addLiniarPull(loc,Const.GAR_WAND_BLOCKED_VAL);
+
+        final float outer_rad = 4f;
+        final float outer_circum = (float)Math.PI * 2 * outer_rad;
+        final int check_locs = (int)outer_circum;
+        final float rad_between =  ((float)Math.PI * 2) / check_locs;
+
+        boolean some_chunk_blocked = false;
+        boolean prev_blocked = false;
+
+        boolean res = false;
+        for(int i = 0; i < check_locs; i++){
+            dir = dir.rotateLeftRads(rad_between);
+            MapLocation loc = cen.add(dir,outer_rad);
+            boolean this_blocked = isCircleOccupiedByTreeRoughly(loc,1.0f);
+            rc.setIndicatorDot(loc,255,255,255);
+            if(this_blocked){
+                rc.setIndicatorDot(loc,255,0,0);
             }
-            //visualize signt radii
-            //rc.setIndicatorDot(cen.add(dir,RobotType.SOLDIER.bulletSightRadius),255,255,255);
-            //rc.setIndicatorDot(cen.add(dir,RobotType.SOLDIER.sensorRadius),0,0,255);
+            if(this_blocked && !prev_blocked){
+                if(some_chunk_blocked){
+                    res = true;
+                }
+                else{
+                    some_chunk_blocked = true;
+                }
+            }
+            prev_blocked = this_blocked;
         }
+        return res;
+    }
+    int encircled_loc_count() throws GameActionException {
+        final MapLocation cen = rc.getLocation();
+        Direction dir = new Direction(0);
+
+        final float outer_rad = 1.5f;
+        final int check_locs = 6;
+        final float rad_between =  (2 * (float)Math.PI) / check_locs;
+
+        int blocked_count = 0;
+        for(int i = 0; i < check_locs; i++) {
+            dir = dir.rotateLeftRads(rad_between);
+            MapLocation loc = cen.add(dir, outer_rad);
+            //rc.setIndicatorDot(loc,255,255,255);
+            if(isCircleOccupiedByTreeRoughly(loc,0.99f)){
+                //rc.setIndicatorDot(loc,255,0,0);
+                blocked_count++;
+            }
+        }
+        return blocked_count;
+    }
+    boolean buildTree() throws GameActionException{
+        Direction dir = new Direction(0);
+
+        final int check_locs = 6;
+        final float rad_between =  (2 * (float)Math.PI) / check_locs;
+
+        for(int i = 0; i < check_locs; i++) {
+            dir = dir.rotateLeftRads(rad_between);
+            if(rc.canPlantTree(dir)){
+                rc.plantTree(dir);
+                return true;
+            }
+        }
+        return false;
     }
 
     void avoidArchons() throws GameActionException {
@@ -96,11 +151,13 @@ public class Gardener extends BaseRobot{
         float neut_tree_percent = neutral_tree_area() / Const.area(rc.getType().sensorRadius);
         return !built_lumberjack && neut_tree_percent > Const.LUMBER_TREE_AREA_HIRE_PERC;
     }
-    void produce_lumberjack() throws GameActionException {
+    boolean produce_lumberjack() throws GameActionException {
         if(should_produce_lumberjack()){
             if(tryBuildRand(RobotType.LUMBERJACK)){
                 built_lumberjack = true;
+                return true;
             }
         }
+        return false;
     }
 }

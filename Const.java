@@ -12,8 +12,9 @@ public class Const {
     final static float GAR_WAND_BLOCKED_VAL = 0.5f;
     final static float GAR_WAND_ARCHON_AVOID = 1.0f;
     final static float LUMBER_TREE_LOC_BASE = 1.0f;
-    final static float WANDER_MOVE_ON_VAL = 0.5f;
+    final static float WANDER_MOVE_ON_VAL = 1.5f;
     final static float AVD_TREE_BASE_VAL = 0.1f;
+    final static float SCOUT_CHASE_SCOUT_VAL = 1.0f;
 
     //movement action constants
     final static float MOVE_EFFICIENCY = 0.9f;
@@ -23,6 +24,7 @@ public class Const {
 
     //unit production constants
     final static int RAND_BUILD_TRIES = 20;
+    final static int MIN_TREE_OPENINGS = 4;
 
     //helper function
     static float area(float rad){
