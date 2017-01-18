@@ -12,6 +12,7 @@ public class BaseRobot {
     Team enemy;
     LinkedList<MapLocation> prev_points;
     PolyLine line;
+    ArrayList<MapLocation> cur_fights;
     public BaseRobot(RobotController inrc){
         rc = inrc;
         mytype = rc.getType();
@@ -19,6 +20,7 @@ public class BaseRobot {
         enemy = myteam.opponent();
         prev_points = new LinkedList<MapLocation>();
         line = new PolyLine();
+        cur_fights = new ArrayList<MapLocation>();
     }
     public void run() throws GameActionException {
         movement = new Movement(rc);
@@ -26,6 +28,9 @@ public class BaseRobot {
         space_robots();
         small_rand_pull();
         add_chase_val();
+        towards_bullet_tree();
+        shake_tree();
+        handle_fights();
         line = new PolyLine();
     }
     void set_wander_movement(){
@@ -39,6 +44,84 @@ public class BaseRobot {
         }
         prev_points.add(rc.getLocation());
     }
+    void set_cur_fights() throws GameActionException {
+        cur_fights.clear();
+        for(int i = 0; i < Const.MAX_NUM_FIGHTS; i++){
+            int broad_idx = i * 2 + Const.FIGHT_START_LOC;
+            int turn = rc.readBroadcast(broad_idx+1);
+            if(turn + Const.FIGHT_LENGTH > rc.getRoundNum()){
+                MapLocation loc = new Message(rc.readBroadcast(broad_idx)).location();
+                cur_fights.add(loc);
+            }
+        }
+    }
+    void broadcast_fight(int pos,MapLocation loc) throws GameActionException {
+        rc.broadcast(pos,Message.EncodeMapLoc(loc));
+        //System.out.println(Integer.toString(Message.EncodeMapLoc(loc)));
+        //System.out.println(new Message(Message.EncodeMapLoc(loc)).location().toString());
+        rc.broadcast(pos+1,rc.getRoundNum());
+    }
+    boolean add_new_fight(MapLocation loc) throws GameActionException {
+        for(int i = 0; i < Const.MAX_NUM_FIGHTS; i++){
+            int broad_idx = i * 2 + Const.FIGHT_START_LOC;
+            int turn = rc.readBroadcast(broad_idx+1);
+            if(turn + Const.FIGHT_LENGTH < rc.getRoundNum()){
+                broadcast_fight(broad_idx,loc);
+                return true;
+            }
+        }
+        return false;
+    }
+    boolean should_add_new_right(){
+        if(rc.senseNearbyRobots(-1,enemy).length >= Const.TROOPS_TO_FIGHT){
+            for(MapLocation floc : cur_fights){
+                if(floc.distanceTo(rc.getLocation()) < Const.FIGHT_RADIUS){
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    void draw_fights(){
+        for(MapLocation loc : cur_fights){
+            //System.out.println(loc.toString());
+            rc.setIndicatorDot(loc,255,0,0);
+            Direction dir = new Direction(1,0);
+            for(int i = 0; i < 10; i++){
+                MapLocation p = loc.add(dir,Const.FIGHT_RADIUS);
+                rc.setIndicatorDot(p,255,255,255);
+                dir.rotateLeftDegrees(36.0f);
+            }
+        }
+    }
+    void towards_bullet_tree(){
+        for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)){
+            if(tree.containedBullets > 0){
+                movement.addLiniarPull(tree.location,Const.BULLET_TREE_VAL);
+            }
+        }
+    }
+    void shake_tree() throws GameActionException{
+        for(TreeInfo tree : rc.senseNearbyTrees(3,Team.NEUTRAL)){
+            if(rc.canShake(tree.ID)){
+                rc.shake(tree.ID);
+            }
+        }
+    }
+    void handle_fights() throws GameActionException {
+        set_cur_fights();
+        draw_fights();
+
+        if(should_add_new_right()){
+            if(add_new_fight(rc.getLocation())){
+                rc.setIndicatorDot(rc.getLocation(),0,255,0);
+            }
+        }
+    }
+
     /**
      * Returns a random Direction
      * @return a random Direction
@@ -161,8 +244,17 @@ public class BaseRobot {
         }
         return false;
     }
-    void move_to_shake_tree() throws GameActionException{
-
+    void broadcast_scout_pestering()throws GameActionException{
+        int scout_count = 0;
+        for(RobotInfo rob : rc.senseNearbyRobots(2.5f,enemy)){
+            if(rob.type == RobotType.SCOUT){
+                scout_count++;
+            }
+        }
+        if(scout_count > 0){
+            rc.broadcast(Const.SCOUTS_PESTERING,Message.EncodeMapLoc(rc.getLocation()));
+            rc.broadcast(Const.SCOUTS_PESTERING_TURN,rc.getRoundNum());
+        }
     }
     void add_chase_val()throws GameActionException{
         for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){

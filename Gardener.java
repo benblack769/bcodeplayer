@@ -8,27 +8,33 @@ public class Gardener extends BaseRobot{
 
     boolean tree_built = false;
     boolean built_lumberjack = false;
+    boolean def_troop = false;
     @Override
     public void run() throws GameActionException {
         super.run();
+
+        broadcast_scout_pestering();
 
         avoidArchons();
         set_wander_movement();
 
         water_tree();
+        early_build_tree();
+        produce_scout();
         produce_lumberjack();
         //builds tree if not wandering make sure this happens after troop production
         if(!should_produce_lumberjack()) {
             if (!location_blocks_two_paths()) {
-                if ((7 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
+                if ((6 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
                     buildTree();
                     tree_built = true;
                 }
             }
-            if (tree_built && 7 - encircled_loc_count() > 1) {
+            if (tree_built && 6 - encircled_loc_count() > 1) {
                 buildTree();
             }
         }
+        //produce_tank();
         produce_soldiers();
 
         //if not sticking to tree, then move
@@ -106,6 +112,7 @@ public class Gardener extends BaseRobot{
             dir = dir.rotateLeftRads(rad_between);
             if(rc.canPlantTree(dir)){
                 rc.plantTree(dir);
+                tree_built = true;
                 return true;
             }
         }
@@ -130,10 +137,33 @@ public class Gardener extends BaseRobot{
         }
         return false;
     }
+    void early_build_tree()throws GameActionException{
+        if(rc.getRoundNum() < 40){
+            buildTree();
+        }
+    }
+    void produce_scout()throws GameActionException{
+        if((!def_troop && rc.getRoundNum() <= Const.SOLDIER_DEF_ROUND) ||
+                (new Message(rc.readBroadcast(Const.SCOUTS_PESTERING)).nonEmpty()
+                && rc.readBroadcast(Const.SCOUTS_PESTERING_TURN) + Const.SCOUT_PESTER_LENGTH > rc.getRoundNum())){
+            if(tryBuildRand(RobotType.SCOUT)){
+                def_troop = true;
+            }
+        }
+    }
     void produce_soldiers()throws GameActionException{
+        if(
+                rc.senseNearbyRobots(-1,enemy).length > 1 ||
+                (rc.getTeamBullets() > 500 && Math.random() < 0.9)){
+            if(tryBuildRand(RobotType.SOLDIER)){
+                def_troop = true;
+            }
+        }
+    }
+    void produce_tank()throws GameActionException{
         if(rc.senseNearbyRobots(-1,enemy).length > 1 ||
-                (rc.getTeamBullets() > 1000 && Math.random() < 0.9)){
-            tryBuildRand(RobotType.SOLDIER);
+                (rc.getTeamBullets() > 500 && Math.random() < 0.5)){
+            tryBuildRand(RobotType.TANK);
         }
     }
     float neutral_tree_area(){

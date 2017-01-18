@@ -13,6 +13,7 @@ public class Archon extends BaseRobot {
     @Override
     public void run()throws GameActionException  {
         super.run();
+        broadcast_scout_pestering();
         donate_extra_bullets();
 
         produce_gardener();

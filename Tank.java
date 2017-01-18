@@ -10,8 +10,14 @@ public class Tank extends  FightRobot {
     @Override
     public void run() throws GameActionException {
         super.run();
-        //if(rc.canFireSingleShot()){
-        //    rc.fireSingleShot(Direction.getWest());
-        //}
+
+        move_towards_fight();
+
+        set_wander_movement();
+        if(!moveOpti()){
+            // Move randomly
+            tryMove(randomDirection());
+        }
+        attack_body(first_attack_obj());
     }
 }
