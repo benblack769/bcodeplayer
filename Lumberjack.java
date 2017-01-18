@@ -35,7 +35,7 @@ public class Lumberjack extends BaseRobot {
                 move_to_tree();
                 if(!moveOpti()) {
                     // Move Randomly
-                    tryMove(randomDirection());
+                    ///tryMove(randomDirection());
                 }
             }
         }

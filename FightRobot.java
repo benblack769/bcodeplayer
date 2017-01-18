@@ -21,23 +21,6 @@ public class FightRobot extends  BaseRobot{
     };
     float[] octantvals = new float[eight];
 
-    @Override
-    public void run() throws GameActionException {
-        super.run();
-
-        Team enemy = rc.getTeam().opponent();
-
-        MapLocation myLocation = rc.getLocation();
-
-        // See if there are any nearby enemy robots
-
-        set_wander_movement();
-        if(!moveOpti()){
-            // Move randomly
-            tryMove(randomDirection());
-        }
-        attack_body(first_attack_obj());
-    }
     int getOctant(Direction dir){
         int deg = (int)(360f + dir.getAngleDegrees()) % 360;
         return (deg * 8) / 360;
@@ -90,6 +73,11 @@ public class FightRobot extends  BaseRobot{
         }
         return bestrob;
     }
+    void move_towards_fight() throws GameActionException {
+        for(MapLocation floc : cur_fights){
+            movement.addLiniarPull(floc,Const.MOVE_TO_FIGHT_VAL);
+        }
+    }
     BodyInfo first_attack_obj(){
         RobotInfo[] robs = rc.senseNearbyRobots(-1, enemy);
         return robs.length > 0 ? robs[0] : null;
@@ -103,5 +91,16 @@ public class FightRobot extends  BaseRobot{
             // ...Then fire a bullet in the direction of the enemy.
             rc.firePentadShot(rc.getLocation().directionTo(body.getLocation()));
         }
+        if(rc.canFireSingleShot()){
+            rc.fireSingleShot(rc.getLocation().directionTo(body.getLocation()));
+        }
+    }
+    boolean in_bullet_path(BulletInfo bul,MapLocation loc,int turns){
+        float bul_dis = bul.speed * turns;
+        if(bul.dir.getDeltaX(0) == 0){
+            return true;
+        }
+        float y = bul.dir.getDeltaY(0) / bul.dir.getDeltaX(0);
+        return y < 0;
     }
 }

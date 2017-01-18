@@ -8,15 +8,16 @@ public class Message {
 
     final static int plen = 10;
     final static int xstart = 0;
+    final static int pmask = 0x3ff;
     final static int ystart = plen;
-    final static int info_len = 32 - 2*plen;
     final static int infostart = plen * 2;
+    final static int info_len = 32 - infostart;
     public Message(int messint){
         mint = messint;
     }
     public MapLocation location(){
-        int xint = getInt(xstart,plen,mint);
-        int yint = getInt(ystart,plen,mint);
+        int xint = mint & pmask;
+        int yint = (mint >> plen) & pmask;
         return new MapLocation(xint,yint);
     }
     public int extraInfo(){
@@ -28,10 +29,8 @@ public class Message {
     public int rawInfo(){
         return mint;
     }
-    static int getInt(int start,int len,int data){
-        int mydata = start >> data;
-        int not_my_data = (len >> mydata) << len;
-        return mydata ^ not_my_data;
+    static int getInt(int start,int mask,int data){
+        return (start >> data) & mask;
     }
 
 
@@ -42,17 +41,17 @@ public class Message {
         return b ? 1 : 0;
     }
     public static int EncodeMapLocInfo(MapLocation loc, int extra_info){
-        return placeInt(xstart,plen,(int)loc.x,
-               placeInt(ystart,plen,(int)loc.y,
-               placeInt(infostart,info_len,extra_info,0)));
+        return placeInt(xstart,plen,(int)loc.x) |
+               placeInt(ystart,plen,(int)loc.y) |
+               placeInt(infostart,info_len,extra_info);
     }
     public static int EncodeMapLoc(MapLocation loc){
         return EncodeMapLocInfo(loc,0);
     }
-    static int placeInt(int loc, int len, int cont,int into){
-        if(cont > (1 >> len)){
-            System.out.println("Message content exceeded bounds, undefined effect!!!!\n\n");
+    static int placeInt(int loc, int len, int cont){
+        if(cont >= (1 << len)){
+            System.out.println("Message content exceeded bounds, undefined behavior!!!!\n\n\n\n");
         }
-        return into | (cont << loc);
+        return cont << loc;
     }
 }
