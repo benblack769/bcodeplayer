@@ -13,6 +13,7 @@ public class BaseRobot {
     LinkedList<MapLocation> prev_points;
     PolyLine line;
     ArrayList<MapLocation> cur_fights;
+    boolean fast_start;
     public BaseRobot(RobotController inrc){
         rc = inrc;
         mytype = rc.getType();
@@ -21,6 +22,18 @@ public class BaseRobot {
         prev_points = new LinkedList<MapLocation>();
         line = new PolyLine();
         cur_fights = new ArrayList<MapLocation>();
+        fast_start = is_fast_start();
+    }
+    boolean is_fast_start(){
+        MapLocation[] mylocs = rc.getInitialArchonLocations(myteam);
+        MapLocation[] enlocs = rc.getInitialArchonLocations(enemy);
+        float max_dis = 0;
+        for(MapLocation my : mylocs){
+            for(MapLocation en : enlocs){
+                max_dis = Math.max(max_dis, my.distanceTo(en));
+            }
+        }
+        return max_dis < Const.FAST_START_DIS;
     }
     public void run() throws GameActionException {
         movement = new Movement(rc);
@@ -204,10 +217,23 @@ public class BaseRobot {
         if(!rc.hasRobotBuildRequirements(rty)){
             return false;
         }
-        for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
-            Direction build_dir = randomDirection();
-            if(rc.canBuildRobot(rty,build_dir)){
-                rc.buildRobot(rty,build_dir);
+        Direction dir = new Direction(0);
+
+        final int check_locs = 6;
+        final float rad_between =  (2 * (float)Math.PI) / check_locs;
+
+        for(int i = 0; i < check_locs; i++) {
+            dir = dir.rotateLeftRads(rad_between);
+            if(rc.canBuildRobot(rty,dir)){
+                rc.buildRobot(rty,dir);
+                return true;
+            }
+        }
+        return false;
+    }
+    boolean enemy_combat_troop_in_rad(float rad)throws GameActionException{
+        for(RobotInfo rob : rc.senseNearbyRobots(rad,enemy)){
+            if(rob.type.canAttack()){
                 return true;
             }
         }
@@ -244,7 +270,7 @@ public class BaseRobot {
         }
         return false;
     }
-    void broadcast_scout_pestering()throws GameActionException{
+    void broadcast_scout_pestering() throws GameActionException{
         int scout_count = 0;
         for(RobotInfo rob : rc.senseNearbyRobots(2.5f,enemy)){
             if(rob.type == RobotType.SCOUT){
@@ -256,12 +282,16 @@ public class BaseRobot {
             rc.broadcast(Const.SCOUTS_PESTERING_TURN,rc.getRoundNum());
         }
     }
-    void add_chase_val()throws GameActionException{
+    void add_chase_val() throws GameActionException{
         for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){
             float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,rob.health,rob.location);
             float chased_val = Const.chase_val(rob.type,rob.health,rob.location,mytype,rc.getHealth(),rc.getLocation());
-            movement.addLiniarPull(rob.location,chase_val - chased_val);
+            float dif_val = chase_val - chased_val;
+            System.out.print(dif_val);
+            System.out.print(' ');
+            movement.addLiniarPull(rob.location,dif_val);
         }
+        System.out.print('\n');
     }
     void donate_extra_bullets()throws GameActionException{
         final float max_store_bullets = 2000;

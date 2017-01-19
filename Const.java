@@ -8,6 +8,8 @@ public class Const {
     final static int SCOUT_PESTER_LENGTH = 15;
     final static int FIGHT_LENGTH = 30;
     final static int TROOPS_TO_FIGHT = 2;
+    final static float CHASE_ADJ_VAL = 0.01f;
+    final static float FAST_START_DIS = 30.0f;
 
     //round numbers
     final static int SOLDIER_DEF_ROUND = 120;
@@ -25,9 +27,12 @@ public class Const {
     final static float LUMBER_TREE_LOC_BASE = 1.0f;
     final static float WANDER_MOVE_ON_VAL = 1.5f;
     final static float AVD_TREE_BASE_VAL = 0.1f;
-    final static float SCOUT_CHASE_SCOUT_VAL = 1.0f;
+    final static float SCOUT_CHASE_SCOUT_VAL = 2.5f;
+    final static float SCOUT_CHASE_GARD_VAL = 1.5f;
     final static float MOVE_TO_FIGHT_VAL = 0.3f;
     final static float BULLET_TREE_VAL = 0.1f;
+    final static float CHASE_CONSTANT_VAL = 5.0f;
+    final static float GARD_MOVE_TOWARDS_UNHEALED_TREE = 3.5f;
 
     //movement action constants
     final static float MOVE_EFFICIENCY = 0.9f;
@@ -56,7 +61,7 @@ public class Const {
     }
     static float sqr(float val){return val * val;}
     static float damageValue(RobotType type,float health){
-        float low_health_val = 1.0f / (10.0f + health);
+        float low_health_val = 10.0f / (10.0f + health);
         float bullet_cost_val = Const.effectiveBulletCost(type);
         float is_scout_bonus = type == RobotType.SCOUT ? 2f : 1;
 
@@ -66,9 +71,13 @@ public class Const {
         if(!chaser_ty.canAttack()){
             return 0;
         }
+        if(chaser_ty == RobotType.SCOUT){
+            return 0;
+        }
         float attack_val = chaser_ty.attackPower;
         float bul_speeed_val = sqr(chaser_ty.bulletSpeed);
         float damage_value = damageValue(chased_ty,chased_h);
-        return attack_val * bul_speeed_val * damage_value;
+        float distance_val = 16.0f / chaser_loc.distanceSquaredTo(chased_loc);
+        return attack_val * bul_speeed_val * damage_value * distance_val * CHASE_ADJ_VAL * CHASE_CONSTANT_VAL;
     }
 }

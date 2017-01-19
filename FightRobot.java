@@ -2,6 +2,7 @@ package befplayer;
 import battlecode.common.*;
 
 public class FightRobot extends  BaseRobot{
+    PolyLine blocks;
     public FightRobot(RobotController rc) {
         super(rc);
     }
@@ -21,6 +22,26 @@ public class FightRobot extends  BaseRobot{
     };
     float[] octantvals = new float[eight];
 
+    void setBlocks() {
+        blocks = new PolyLine();
+        for (TreeInfo tree : rc.senseNearbyTrees(6)) {
+            if (tree.radius < 1.0) {
+                blocks.addSmallBody(tree, 0);
+            } else {
+                blocks.addBody(tree, 0);
+            }
+        }
+    }
+    MapLocation move_to_scout_loc(RobotInfo scout){
+        MapLocation my_loc = rc.getLocation();
+        if(scout.location.distanceTo(my_loc) > mytype.strideRadius){
+            return null;
+        }
+        return  null;
+    }
+    boolean is_blocked(RobotInfo rob){
+        return blocks.intersects(new LinSeg(rob.location,rc.getLocation()));
+    }
     int getOctant(Direction dir){
         int deg = (int)(360f + dir.getAngleDegrees()) % 360;
         return (deg * 8) / 360;

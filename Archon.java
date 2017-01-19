@@ -27,11 +27,15 @@ public class Archon extends BaseRobot {
     }
     void produce_gardener() throws GameActionException {
         final int disired_begin_gardeners = 6;
-        final int desired_middle_gardener = 15;
-        if(num_prod_garden * num_archons <= disired_begin_gardeners ||
-                Math.random() < 0.03 ||
-                (num_prod_garden * num_archons <= desired_middle_gardener
-                        && rc.getTeamBullets() > 500)){
+        boolean desires_begin_gards = num_prod_garden * num_archons <= disired_begin_gardeners;
+        boolean rand_gard = Math.random() < 0.02;
+        boolean in_danger = enemy_combat_troop_in_rad(10);
+        boolean very_begin_turn = rc.getRoundNum() < 100;
+        boolean no_gard_produced = num_prod_garden == 0;
+
+        if(!in_danger && (
+                 very_begin_turn && no_gard_produced ||
+                        (!very_begin_turn && (desires_begin_gards || rand_gard)))){
             if(tryHireGardenerRand()){
                 num_prod_garden++;
             }
