@@ -1,53 +1,109 @@
 package benplayer;
 import battlecode.common.*;
 
+import java.util.ArrayList;
+
 public class Gardener extends BaseRobot{
     public Gardener(RobotController inrc) {
         super(inrc);
+        prev_health = rc.getHealth();
     }
 
     boolean tree_built = false;
+    int trees_built = 0;
     boolean built_lumberjack = false;
     boolean def_troop = false;
+    float prev_health;
+    boolean is_being_attacked;
     @Override
     public void run() throws GameActionException {
         super.run();
+        handle_is_being_attacked();
 
         broadcast_scout_pestering();
 
         avoidArchons();
         set_wander_movement();
+        move_towards_unhealed_trees();
 
         water_tree();
-        early_build_tree();
-        produce_scout();
-        produce_lumberjack();
-        //builds tree if not wandering make sure this happens after troop production
-        if(!should_produce_lumberjack()) {
-            if (!location_blocks_two_paths()) {
-                if ((6 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
-                    buildTree();
-                    tree_built = true;
-                }
-            }
-            if (tree_built && 6 - encircled_loc_count() > 1) {
-                buildTree();
-            }
-        }
-        //produce_tank();
-        produce_soldiers();
+        handle_production();
 
-        //if not sticking to tree, then move
-        if(!tree_built){
+        handle_move();
+    }
+    void handle_production() throws GameActionException {
+        if(rc.getRoundNum() < 30) {
+            buildTree();
+        }
+        else if(should_produce_scout()){
+            produce_scout();
+        }
+        else if(should_produce_soldier()){
+            produce_soldiers();
+        }
+        else if(should_produce_lumberjack()){
+            produce_lumberjack();
+        }
+        else{
+            produce_tree();
+        }
+    }
+    void handle_move() throws GameActionException {
+        if(!tree_built) {
             //try to move optimally
-            if(!moveOpti()) {
+            if (!moveOpti()) {
                 // try to move randomly
                 tryMove(randomDirection());
             }
         }
     }
-    boolean isCircleOccupiedByTreeRoughly(MapLocation loc,float radius) throws GameActionException {
-        return rc.onTheMap(loc) && rc.isCircleOccupiedExceptByThisRobot(loc,radius) && !rc.isLocationOccupiedByRobot(loc);
+    void handle_is_being_attacked(){
+        is_being_attacked = (rc.getHealth() < prev_health);
+        prev_health = rc.getHealth();
+    }
+    void move_towards_unhealed_trees(){
+        for(TreeInfo tree: rc.senseNearbyTrees(-1,myteam)){
+            if(tree.getHealth() < tree.maxHealth - 10){
+                movement.addLiniarPull(tree.location,Const.GARD_MOVE_TOWARDS_UNHEALED_TREE);
+            }
+            else{
+                movement.addLiniarPull(tree.location,Const.GARD_MOVE_TOWARDS_UNHEALED_TREE/2);
+            }
+        }
+    }
+    void move_into_unhealed_trees(){
+        ArrayList<TreeInfo> trees = new ArrayList<TreeInfo>();
+        for(TreeInfo tree: rc.senseNearbyTrees(-1,myteam)){
+            if(tree.getHealth() < tree.maxHealth - 10){
+                trees.add(tree);
+            }
+        }
+        TreeInfo t1 =null;
+        TreeInfo t2;
+        outloop:
+        for(TreeInfo tree : trees){
+            for(TreeInfo otree : trees){
+                float dis = tree.location.distanceTo(otree.location);
+                if(tree.ID != otree.ID && dis < 1.001){
+                    t1 = tree;
+                    t2 = otree;
+                    break outloop;
+                }
+            }
+        }
+        if(t1 == null){
+            return;
+        }
+        MapLocation ce;
+        for(TreeInfo t3 : trees){
+
+        }
+    }
+    boolean isCircleOccupied(MapLocation loc) throws GameActionException {
+        return !rc.onTheMap(loc) || rc.isCircleOccupiedExceptByThisRobot(loc,1.0f);
+    }
+    boolean isLocationBlockedPermanently(MapLocation loc) throws GameActionException {
+        return !rc.onTheMap(loc) || rc.isLocationOccupiedByTree(loc);
     }
     boolean location_blocks_two_paths() throws GameActionException{
         final MapLocation cen = rc.getLocation();
@@ -60,17 +116,24 @@ public class Gardener extends BaseRobot{
 
         boolean some_chunk_blocked = false;
         boolean prev_blocked = false;
+        int num_open = 0;
 
         boolean res = false;
         for(int i = 0; i < check_locs; i++){
             dir = dir.rotateLeftRads(rad_between);
             MapLocation loc = cen.add(dir,outer_rad);
-            boolean this_blocked = isCircleOccupiedByTreeRoughly(loc,1.0f);
+            boolean this_blocked = isLocationBlockedPermanently(loc);
             //rc.setIndicatorDot(loc,255,255,255);
             //if(this_blocked){
             //    rc.setIndicatorDot(loc,255,0,0);
             //}
-            if(this_blocked && !prev_blocked){
+            if(this_blocked){
+                num_open++;
+            }
+            else{
+                num_open = 0;
+            }
+            if(num_open >= 2 && !prev_blocked){
                 if(some_chunk_blocked){
                     res = true;
                 }
@@ -95,7 +158,7 @@ public class Gardener extends BaseRobot{
             dir = dir.rotateLeftRads(rad_between);
             MapLocation loc = cen.add(dir, outer_rad);
             //rc.setIndicatorDot(loc,255,255,255);
-            if(isCircleOccupiedByTreeRoughly(loc,0.99f)){
+            if(isCircleOccupied(loc)){
                 //rc.setIndicatorDot(loc,255,0,0);
                 blocked_count++;
             }
@@ -113,6 +176,7 @@ public class Gardener extends BaseRobot{
             if(rc.canPlantTree(dir)){
                 rc.plantTree(dir);
                 tree_built = true;
+                trees_built++;
                 return true;
             }
         }
@@ -137,28 +201,29 @@ public class Gardener extends BaseRobot{
         }
         return false;
     }
-    void early_build_tree()throws GameActionException{
-        if(rc.getRoundNum() < 40){
-            buildTree();
-        }
-    }
-    void produce_scout()throws GameActionException{
-        if((!def_troop && rc.getRoundNum() <= Const.SOLDIER_DEF_ROUND) ||
+    boolean should_produce_scout()throws GameActionException{
+        return (!fast_start && !def_troop && rc.getRoundNum() <= Const.SOLDIER_DEF_ROUND) ||
                 (new Message(rc.readBroadcast(Const.SCOUTS_PESTERING)).nonEmpty()
-                && rc.readBroadcast(Const.SCOUTS_PESTERING_TURN) + Const.SCOUT_PESTER_LENGTH > rc.getRoundNum())){
-            if(tryBuildRand(RobotType.SCOUT)){
-                def_troop = true;
-            }
-        }
+                        && rc.readBroadcast(Const.SCOUTS_PESTERING_TURN) + Const.SCOUT_PESTER_LENGTH > rc.getRoundNum());
     }
-    void produce_soldiers()throws GameActionException{
-        if(
+    boolean should_produce_soldier()throws GameActionException{
+        return((fast_start && !def_troop && rc.getRoundNum() > Const.SOLDIER_DEF_ROUND) ||
                 rc.senseNearbyRobots(-1,enemy).length > 1 ||
-                (rc.getTeamBullets() > 500 && Math.random() < 0.9)){
-            if(tryBuildRand(RobotType.SOLDIER)){
-                def_troop = true;
-            }
+                (rc.getTeamBullets() > 500 && Math.random() < 0.9));
+    }
+    boolean produce_scout()throws GameActionException{
+        if(tryBuildRand(RobotType.SCOUT)){
+            def_troop = true;
+            return true;
         }
+        return false;
+    }
+    boolean produce_soldiers()throws GameActionException{
+        if(tryBuildRand(RobotType.SOLDIER)){
+            def_troop = true;
+            return true;
+        }
+        return false;
     }
     void produce_tank()throws GameActionException{
         if(rc.senseNearbyRobots(-1,enemy).length > 1 ||
@@ -183,6 +248,17 @@ public class Gardener extends BaseRobot{
                 built_lumberjack = true;
                 return true;
             }
+        }
+        return false;
+    }
+    boolean produce_tree() throws GameActionException {
+        if (!location_blocks_two_paths()) {
+            if ((6 - encircled_loc_count()) >= Const.MIN_TREE_OPENINGS) {
+                return buildTree();
+            }
+        }
+        if (tree_built && 6 - encircled_loc_count() > 1) {
+            return buildTree();
         }
         return false;
     }
