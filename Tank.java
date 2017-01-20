@@ -16,7 +16,7 @@ public class Tank extends  FightRobot {
         set_wander_movement();
         if(!moveOpti()){
             // Move randomly
-            tryMove(randomDirection());
+            tryMove(Const.randomDirection());
         }
         attack_body(first_attack_obj());
     }

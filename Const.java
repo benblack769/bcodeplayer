@@ -8,7 +8,7 @@ public class Const {
     final static int SCOUT_PESTER_LENGTH = 15;
     final static int FIGHT_LENGTH = 30;
     final static int TROOPS_TO_FIGHT = 2;
-    final static float CHASE_ADJ_VAL = 0.01f;
+    final static float CHASE_ADJ_VAL = 0.05f;
     final static float FAST_START_DIS = 30.0f;
 
     //round numbers
@@ -33,6 +33,11 @@ public class Const {
     final static float BULLET_TREE_VAL = 0.1f;
     final static float CHASE_CONSTANT_VAL = 5.0f;
     final static float GARD_MOVE_TOWARDS_UNHEALED_TREE = 3.5f;
+
+    //total comparison decision minima
+    final static float SCOUT_MOVE_GARD = 20.0f;
+    final static float TROOP_MOVE_SCOUT = 15.0f;
+    final static float MOVE_ON_BULLET = 18.0f;
 
     //movement action constants
     final static float MOVE_EFFICIENCY = 0.9f;
@@ -61,12 +66,16 @@ public class Const {
     }
     static float sqr(float val){return val * val;}
     static float damageValue(RobotType type,float health){
-        float low_health_val = 10.0f / (10.0f + health);
+        float low_health_val = 1.0f / (10.0f + health);
         float bullet_cost_val = Const.effectiveBulletCost(type);
         float is_scout_bonus = type == RobotType.SCOUT ? 2f : 1;
 
         return low_health_val * bullet_cost_val * is_scout_bonus;
     }
+    static Direction randomDirection() {
+        return new Direction((float)Math.random() * 2 * (float)Math.PI);
+    }
+
     static float chase_val(RobotType chaser_ty,float chaser_h,MapLocation chaser_loc,RobotType chased_ty,float chased_h,MapLocation chased_loc){
         if(!chaser_ty.canAttack()){
             return 0;
@@ -79,5 +88,9 @@ public class Const {
         float damage_value = damageValue(chased_ty,chased_h);
         float distance_val = 16.0f / chaser_loc.distanceSquaredTo(chased_loc);
         return attack_val * bul_speeed_val * damage_value * distance_val * CHASE_ADJ_VAL * CHASE_CONSTANT_VAL;
+    }
+    static float randInRange(float min, float max){
+        final float dis = max - min;
+        return (float)(Math.random()) * dis + min;
     }
 }

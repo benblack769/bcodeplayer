@@ -136,14 +136,6 @@ public class BaseRobot {
     }
 
     /**
-     * Returns a random Direction
-     * @return a random Direction
-     */
-    static Direction randomDirection() {
-        return new Direction((float)Math.random() * 2 * (float)Math.PI);
-    }
-
-    /**
      * Attempts to move in a given direction, while avoiding small obstacles directly in the path.
      *
      * @param dir The intended direction of movement
@@ -195,7 +187,7 @@ public class BaseRobot {
     boolean moveOpti()throws GameActionException{
         movement.calc_bullet_collision_values(rc.senseNearbyBullets());
 
-        final Direction opt_dir = movement.bestDir();
+        final Direction opt_dir = movement.bestLinDir();
         return tryMove(opt_dir);
     }
 
@@ -209,7 +201,7 @@ public class BaseRobot {
         }
     }
     void small_rand_pull(){
-        MapLocation loc = rc.getLocation().add(randomDirection(),50);
+        MapLocation loc = rc.getLocation().add(Const.randomDirection(),50);
         movement.addLiniarPull(loc,Const.SMALL_RAND_VAL);
     }
 
@@ -244,7 +236,7 @@ public class BaseRobot {
             return false;
         }
         for(int i = 0; i < Const.RAND_BUILD_TRIES; i++){
-            Direction build_dir = randomDirection();
+            Direction build_dir = Const.randomDirection();
             if(rc.canHireGardener(build_dir)){
                 rc.hireGardener(build_dir);
                 return true;
@@ -294,12 +286,10 @@ public class BaseRobot {
         System.out.print('\n');
     }
     void donate_extra_bullets()throws GameActionException{
-        final float max_store_bullets = 2000;
-        float donate_bullets = rc.getTeamBullets() - max_store_bullets;
-        if(donate_bullets > 0){
-            rc.donate(donate_bullets);
-        }
         if(GameConstants.VICTORY_POINTS_TO_WIN - rc.getTeamVictoryPoints() < rc.getTeamBullets() / 10){
+            rc.donate(rc.getTeamBullets());
+        }
+        if(rc.getRoundNum() >= rc.getRoundLimit()-2){
             rc.donate(rc.getTeamBullets());
         }
     }

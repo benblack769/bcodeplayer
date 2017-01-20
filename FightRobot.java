@@ -124,4 +124,28 @@ public class FightRobot extends  BaseRobot{
         float y = bul.dir.getDeltaY(0) / bul.dir.getDeltaX(0);
         return y < 0;
     }
+
+    boolean can_move_no_bullet(Direction dir,BulletInfo[] buls) {
+        MapLocation loc = rc.getLocation().add(dir,RobotType.SCOUT.strideRadius);
+        return rc.canMove(loc) && !is_on_bullet(loc,buls);
+    }
+    boolean is_on_bullet(MapLocation loc,BulletInfo[] buls){
+        for(BulletInfo bul : buls){
+            if(loc.distanceTo(bul.location) < RobotType.SCOUT.bodyRadius){
+                return true;
+            }
+        }
+        return false;
+    }
+    MapLocation directly_up_to(RobotInfo rob){
+        float tot_body_rad = rob.type.bodyRadius + mytype.bodyRadius + 0.0001f;
+        for(int i = 0; i < 20; i++){
+            Direction dir = Const.randomDirection();
+            MapLocation moveloc = rob.location.add(dir,tot_body_rad);
+            if(moveloc.distanceTo(rob.location) < mytype.strideRadius &&  rc.canMove(moveloc)){
+                return  moveloc;
+            }
+        }
+        return null;
+    }
 }

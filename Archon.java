@@ -22,7 +22,7 @@ public class Archon extends BaseRobot {
         //try to move optimally
         if(!moveOpti()) {
             // try to move randomly
-            tryMove(randomDirection());
+            tryMove(Const.randomDirection());
         }
     }
     void produce_gardener() throws GameActionException {
