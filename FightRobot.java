@@ -2,7 +2,7 @@ package benplayer;
 import battlecode.common.*;
 
 public class FightRobot extends  BaseRobot{
-    PolyLine blocks;
+    //PolyLine blocks;
     public FightRobot(RobotController rc) {
         super(rc);
     }
@@ -21,7 +21,7 @@ public class FightRobot extends  BaseRobot{
             new Direction(7.5f*OCT_DIS)
     };
     float[] octantvals = new float[eight];
-
+    /*
     void setBlocks() {
         blocks = new PolyLine();
         for (TreeInfo tree : rc.senseNearbyTrees(6)) {
@@ -31,7 +31,7 @@ public class FightRobot extends  BaseRobot{
                 blocks.addBody(tree, 0);
             }
         }
-    }
+    }*/
     MapLocation move_to_scout_loc(RobotInfo scout){
         MapLocation my_loc = rc.getLocation();
         if(scout.location.distanceTo(my_loc) > mytype.strideRadius){
@@ -40,7 +40,7 @@ public class FightRobot extends  BaseRobot{
         return  null;
     }
     boolean is_blocked(RobotInfo rob){
-        return blocks.intersects(new LinSeg(rob.location,rc.getLocation()));
+        return false;//blocks.intersects(new LinSeg(rob.location,rc.getLocation()));
     }
     int getOctant(Direction dir){
         int deg = (int)(360f + dir.getAngleDegrees()) % 360;
@@ -116,6 +116,7 @@ public class FightRobot extends  BaseRobot{
             rc.fireSingleShot(rc.getLocation().directionTo(body.getLocation()));
         }
     }
+    /*
     boolean in_bullet_path(BulletInfo bul,MapLocation loc,int turns){
         float bul_dis = bul.speed * turns;
         if(bul.dir.getDeltaX(0) == 0){
@@ -136,14 +137,14 @@ public class FightRobot extends  BaseRobot{
             }
         }
         return false;
-    }
+    }*/
     MapLocation directly_up_to(RobotInfo rob){
         float tot_body_rad = rob.type.bodyRadius + mytype.bodyRadius + 0.0001f;
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < 12; i++){
             Direction dir = Const.randomDirection();
             MapLocation moveloc = rob.location.add(dir,tot_body_rad);
             if(moveloc.distanceTo(rob.location) < mytype.strideRadius &&  rc.canMove(moveloc)){
-                return  moveloc;
+                return moveloc;
             }
         }
         return null;

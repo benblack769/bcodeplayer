@@ -13,12 +13,8 @@ public class Soldier extends FightRobot{
         move_towards_fight();
 
         set_wander_movement();
-        if(!moveOpti()){
-            // Move randomly
-            tryMove(Const.randomDirection());
-        }
+        moveOpti();
+
         attack_body(first_attack_obj());
-    }
-    void move_up_to_scout(){
     }
 }

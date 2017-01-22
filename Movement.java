@@ -35,21 +35,28 @@ final public class Movement {
         blocking_objs = new BodyInfo[trees.length + robots.length];
         liniar_pull = new MapLocation(0,0);
 
+        consider_values = new  ArrayList<Float>();
+        consider_points = new  ArrayList<MapLocation>();
+
         System.arraycopy(trees, 0, blocking_objs, 0, trees.length);
         System.arraycopy(robots, 0, blocking_objs, trees.length, robots.length);
 
-        calc_avoid_trees();
-
-        //addLinPoints();
-        //addRandPoints();
+        //calc_avoid_trees();
     }
     public void addConsiderPoint(MapLocation loc,float bonus_val){
+        if(loc == null){
+            System.out.println("local null added, not good.");
+            return;
+        }
+        if(!rc.canMove(loc)){
+            System.out.println("not valid move, not good.");
+            return;
+        }
         consider_points.add(loc);
         consider_values.add(bonus_val);
     }
     public void addConsiderPoint(Direction dir,float bonus_val){
-        consider_points.add(cen.add(dir,speed));
-        consider_values.add(bonus_val);
+        addConsiderPoint(cen.add(dir,speed),bonus_val);
     }
     float linVal(MapLocation loc){
         float difx = loc.x - cen.x;
@@ -72,52 +79,85 @@ final public class Movement {
         return tot_val;
     }
     public MapLocation bestLoc(){
+        int start = Clock.getBytecodeNum();
+        addLinPoints();
+        addArbPoints();
+
         //first stage, consider best possible points
         int size = consider_values.size();
         Float[] values = consider_values.toArray(new Float[consider_values.size()]);
         MapLocation[] points = consider_points.toArray(new MapLocation[consider_points.size()]);
+
         for(int i = 0; i < size; i++){
             values[i] += linVal(points[i]);
-            values[i] += bulletsVal(points[i]);
+            if(Clock.getBytecodesLeft() > 2000) {
+                //values[i] += bulletsVal(points[i]);
+            }
+            else{
+                //System.out.println("bullet calculations truncated due to bytecode limit");
+            }
         }
         MapLocation max_p = null;
-        float bestv = -10e10f;
-        for(int i = 0; i < bestv; i++){
+        float smallval = Float.NEGATIVE_INFINITY;
+        float bestv = smallval;
+        for(int i = 0; i < size; i++){
             float val = values[i];
-            if(bestv < val){
+            if(bestv <= val){
                 bestv = val;
                 max_p = points[i];
             }
-        }
-        return max_p;
-    }
-    void addRandPoints(){
-        final int num_cen_ps = 5;
-        final int num_edge_ps = 3;
-        //gets random points in middle
-        for(int j = 0; j < num_cen_ps; j++){
-            while(true){
-                Float x = Const.randInRange(cen.x - speed,cen.x + speed);
-                Float y = Const.randInRange(cen.y - speed,cen.y + speed);
-                MapLocation loc = new MapLocation(x,y);
-                if(loc.distanceTo(cen) < speed && rc.canMove(loc)){
-                    addConsiderPoint(loc,0);
-                    break;
-                }
+            if(val < -10e10f){
+                System.out.println("really small value!!");
+            }
+            if(points[i] == null){
+                System.out.println("null maplocation!!");
             }
         }
-        for(int i = 0; i < num_edge_ps; i++){
-            addConsiderPoint(Const.randomDirection(),0);
+        if(max_p == null && size > 0){
+            System.out.println("value calculation totally off!!!");
+            System.out.println(size);
+            for(MapLocation loc :  points){
+                System.out.println(loc);
+            }
+            for(Float val : values){
+                System.out.println(val);
+            }
+        }
+        int end = Clock.getBytecodeNum();
+        System.out.println(end-start);
+        return max_p;
+    }
+    void addArbPoints(){
+        final int num_cen_ps = 3;
+        final int num_edge_ps = 5;
+        Direction dir = Const.randomDirection();
+        //gets random points in middle
+        for(int j = 0; j < num_edge_ps; j++){
+            dir = dir.rotateLeftDegrees(360f/num_edge_ps);
+            MapLocation loc = cen.add(dir,speed);
+            if(rc.canMove(loc)){
+                addConsiderPoint(loc,0);
+            }
+        }
+        for(int j = 0; j < num_cen_ps; j++){
+            dir = dir.rotateLeftDegrees(360f/num_cen_ps);
+            MapLocation loc = cen.add(dir,speed/2);
+            if(rc.canMove(loc)){
+                addConsiderPoint(loc,0);
+            }
         }
     }
     void addLinPoints() {
         //add liniar point
         Direction dir = bestLinDir();
+        if(dir == null){
+            dir = Const.randomDirection();
+        }
         if (rc.canMove(dir)) {
             addConsiderPoint(dir,0);
         }
-        float degreeOffset = 12;
-        int checksPerSide = 5;
+        float degreeOffset = 20;
+        int checksPerSide = 3;
 
         for(int check = 1; check <= checksPerSide; check++) {
             // Try the offset of the left side
@@ -131,28 +171,13 @@ final public class Movement {
         }
     }
     public void addLiniarPull(MapLocation loc,float value){
-        float locdis = loc.distanceTo(cen);
+        float locdis = Math.max(loc.distanceTo(cen),speed);
         float dis_val = value / locdis;//normalizes on distance
         liniar_pull = new MapLocation(liniar_pull.x + (loc.x - cen.x) * dis_val,liniar_pull.y + (loc.y - cen.y) * dis_val);
     }
-    public float linPullMagnitue(){
-        return liniar_pull.distanceTo(new MapLocation(0,0));
-    }
     public Direction bestLinDir(){
-        Direction lin_dir = cen.directionTo(new MapLocation(cen.x + liniar_pull.x,cen.y + liniar_pull.y));
+        Direction lin_dir = new MapLocation(0,0).directionTo(liniar_pull);
         return lin_dir;
-    }
-    void calc_bullet_collision_values(BulletInfo[] bullets){
-        for(BulletInfo bul : bullets){
-            if(willCollideWithMe(bul,cen)){
-                Direction perp_dir1 = bul.dir.rotateLeftDegrees(90);
-                Direction perp_dir2 = bul.dir.rotateLeftDegrees(270);
-                Direction fin_dir = cen.add(perp_dir1).distanceTo(bul.location) >
-                                    cen.add(perp_dir2).distanceTo(bul.location)
-                                        ? perp_dir1 : perp_dir2;
-                addLiniarPull(cen.add(fin_dir),damage_value * bul.damage);
-            }
-        }
     }
     /**
      * A slightly more complicated example function, this returns true if the given bullet is on a collision
@@ -162,13 +187,19 @@ final public class Movement {
      * @return True if the line of the bullet's path intersects with this robot's current position.
      */
     boolean willCollideWithMe(BulletInfo bullet,MapLocation loc) {
-        // Get relevant bullet information
+
         Direction propagationDirection = bullet.dir;
         MapLocation bulletLocation = bullet.location;
 
+        float distToRobot = bulletLocation.distanceTo(loc);
+
+        // Get relevant bullet information
+        if(distToRobot < body_rad){
+            return true;
+        }
+
         // Calculate bullet relations to this robot
         Direction directionToRobot = bulletLocation.directionTo(loc);
-        float distToRobot = bulletLocation.distanceTo(loc);
         float theta = propagationDirection.radiansBetween(directionToRobot);
 
         // If theta > 90 degrees, then the bullet is traveling away from us and we can break early
@@ -182,7 +213,7 @@ final public class Movement {
         // line that is the path of the bullet.
         float perpendicularDist = (float)Math.abs(distToRobot * Math.sin(theta)); // soh cah toa :)
 
-        return (perpendicularDist <= type.bodyRadius);
+        return (perpendicularDist <= body_rad);
     }
     boolean blocked_loc(MapLocation loc) throws GameActionException {
         return !rc.onTheMap(loc) || rc.isLocationOccupiedByTree(loc);
@@ -196,7 +227,7 @@ final public class Movement {
             Direction dir = new Direction(1,0);
             //gets the whole thing started
             for(int d = 0; d < dir_split; d++){
-                dir.rotateLeftDegrees(360.0f / dir_split);
+                dir = dir.rotateLeftDegrees(360.0f / dir_split);
                 if(!blocked_loc(cen.add(dir,level_dis))){
                     break;
                 }
@@ -204,7 +235,7 @@ final public class Movement {
             int count = 0;
             float val_avd_tree = Const.AVD_TREE_BASE_VAL;
             for(int d = 0; d < dir_split; d++){
-                dir.rotateLeftDegrees(360.0f / dir_split);
+                dir = dir.rotateLeftDegrees(360.0f / dir_split);
                 MapLocation loc = cen.add(dir,level_dis);
                 if(blocked_loc(loc)){
                     val_avd_tree *= AVD_TREE_EXP_L;

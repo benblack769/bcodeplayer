@@ -20,10 +20,7 @@ public class Archon extends BaseRobot {
         set_wander_movement();
 
         //try to move optimally
-        if(!moveOpti()) {
-            // try to move randomly
-            tryMove(Const.randomDirection());
-        }
+        moveOpti();
     }
     void produce_gardener() throws GameActionException {
         final int disired_begin_gardeners = 6;
@@ -40,5 +37,13 @@ public class Archon extends BaseRobot {
                 num_prod_garden++;
             }
         }
+    }
+    boolean enemy_combat_troop_in_rad(float rad)throws GameActionException{
+        for(RobotInfo rob : rc.senseNearbyRobots(rad,enemy)){
+            if(rob.type.canAttack()){
+                return true;
+            }
+        }
+        return false;
     }
 }

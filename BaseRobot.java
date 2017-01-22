@@ -3,6 +3,7 @@ import battlecode.common.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class BaseRobot {
     RobotController rc;
@@ -106,12 +107,12 @@ public class BaseRobot {
             for(int i = 0; i < 10; i++){
                 MapLocation p = loc.add(dir,Const.FIGHT_RADIUS);
                 rc.setIndicatorDot(p,255,255,255);
-                dir.rotateLeftDegrees(36.0f);
+                dir = dir.rotateLeftDegrees(36.0f);
             }
         }
     }
     void towards_bullet_tree(){
-        for(TreeInfo tree : rc.senseNearbyTrees(-1,Team.NEUTRAL)){
+        for(TreeInfo tree : rc.senseNearbyTrees(5,Team.NEUTRAL)){
             if(tree.containedBullets > 0){
                 movement.addLiniarPull(tree.location,Const.BULLET_TREE_VAL);
             }
@@ -119,8 +120,10 @@ public class BaseRobot {
     }
     void shake_tree() throws GameActionException{
         for(TreeInfo tree : rc.senseNearbyTrees(3,Team.NEUTRAL)){
-            if(rc.canShake(tree.ID)){
-                rc.shake(tree.ID);
+            if(tree.containedBullets > 0) {
+                if (rc.canShake(tree.ID)) {
+                    rc.shake(tree.ID);
+                }
             }
         }
     }
@@ -135,68 +138,28 @@ public class BaseRobot {
         }
     }
 
-    /**
-     * Attempts to move in a given direction, while avoiding small obstacles directly in the path.
-     *
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    boolean tryMove(Direction dir) throws GameActionException {
-        return tryMove(dir,10,6);
-    }
-
-    /**
-     * Attempts to move in a given direction, while avoiding small obstacles direction in the path.
-     *
-     * @param dir The intended direction of movement
-     * @param degreeOffset Spacing between checked directions (degrees)
-     * @param checksPerSide Number of extra directions checked on each side, if intended direction was unavailable
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    boolean tryMove(Direction dir, float degreeOffset, int checksPerSide) throws GameActionException {
-
-        // First, try intended direction
-        if (rc.canMove(dir)) {
-            rc.move(dir);
+    boolean moveOpti()throws GameActionException{
+        final MapLocation opt_loc = movement.bestLoc();
+        if(opt_loc != null && rc.canMove(opt_loc)){
+            rc.move(opt_loc);
             return true;
         }
-
-        // Now try a bunch of similar angles
-        int currentCheck = 1;
-
-        while(currentCheck <= checksPerSide) {
-            // Try the offset of the left side
-            if(rc.canMove(dir.rotateLeftDegrees(degreeOffset*currentCheck))) {
-                rc.move(dir.rotateLeftDegrees(degreeOffset*currentCheck));
-                return true;
-            }
-            // Try the offset on the right side
-            if(rc.canMove(dir.rotateRightDegrees(degreeOffset*currentCheck))) {
-                rc.move(dir.rotateRightDegrees(degreeOffset*currentCheck));
-                return true;
-            }
-            // No move performed, try slightly further
-            currentCheck++;
+        else if(opt_loc != null) {
+            System.out.println("movement in invalid location!!!!!!!!!!");
+            return false;
         }
-
-        // A move never happened, so return false.
-        return false;
-    }
-    boolean moveOpti()throws GameActionException{
-        movement.calc_bullet_collision_values(rc.senseNearbyBullets());
-
-        final Direction opt_dir = movement.bestLinDir();
-        return tryMove(opt_dir);
+        else{
+            System.out.println("opt_move is null!!!!!");
+            return false;
+        }
     }
 
     void space_robots(){
         final MapLocation myloc = rc.getLocation();
-        for(RobotInfo r : rc.senseNearbyRobots(-1,rc.getTeam())){
+        for(RobotInfo r : rc.senseNearbyRobots(3,myteam)){
             float dis = myloc.distanceTo(r.location);
-            if(dis < 3){
-                movement.addLiniarPull(r.location,Const.TROOP_SPACE_VAL/dis);
+            if(dis > 0.1 && dis < 3){
+                movement.addLiniarPull(r.location,-Const.TROOP_SPACE_VAL/dis);
             }
         }
     }
@@ -218,14 +181,6 @@ public class BaseRobot {
             dir = dir.rotateLeftRads(rad_between);
             if(rc.canBuildRobot(rty,dir)){
                 rc.buildRobot(rty,dir);
-                return true;
-            }
-        }
-        return false;
-    }
-    boolean enemy_combat_troop_in_rad(float rad)throws GameActionException{
-        for(RobotInfo rob : rc.senseNearbyRobots(rad,enemy)){
-            if(rob.type.canAttack()){
                 return true;
             }
         }
@@ -254,14 +209,6 @@ public class BaseRobot {
         }
         return res.toArray(new MapLocation[res.size()]);
     }
-    boolean is_too_close(MapLocation loc, MapLocation[] locs,float close_dis){
-        for(MapLocation aloc :  locs){
-            if(aloc.distanceTo(loc) < close_dis){
-                return true;
-            }
-        }
-        return false;
-    }
     void broadcast_scout_pestering() throws GameActionException{
         int scout_count = 0;
         for(RobotInfo rob : rc.senseNearbyRobots(2.5f,enemy)){
@@ -275,7 +222,7 @@ public class BaseRobot {
         }
     }
     void add_chase_val() throws GameActionException{
-        for(RobotInfo rob : rc.senseNearbyRobots(-1,enemy)){
+        for(RobotInfo rob : rc.senseNearbyRobots(6,enemy)){
             float chase_val = Const.chase_val(mytype,rc.getHealth(),rc.getLocation(),rob.type,rob.health,rob.location);
             float chased_val = Const.chase_val(rob.type,rob.health,rob.location,mytype,rc.getHealth(),rc.getLocation());
             float dif_val = chase_val - chased_val;
