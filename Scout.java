@@ -2,9 +2,6 @@ package befplayer;
 
 import battlecode.common.*;
 
-import java.awt.*;
-import java.util.Map;
-
 public class Scout extends  FightRobot {
     public Scout(RobotController rc) {
         super(rc);
@@ -12,66 +9,29 @@ public class Scout extends  FightRobot {
 
     @Override
     public void run() throws GameActionException {
+        int start = Clock.getBytecodeNum();
         super.run();
-        chase_scouts_and_gardeners();
-
         set_wander_movement();
+        int end1 =  Clock.getBytecodeNum();
+        chase_scouts_and_gardeners();
+        int end2 =  Clock.getBytecodeNum();
 
-        if(!move_into_gard_att_range()) {
-            if(!move_no_bullets()) {
-                if (!moveOpti()) {
-                    // Move randomly
-                    tryMove(randomDirection());
-                }
-            }
-        }
-        setBlocks();
+
+        //setBlocks();
+
+        into_gardener_attack_range();
+
+        moveOpti();
+        int end3 =  Clock.getBytecodeNum();
+
         attack_body(first_scout_or_gard());
-    }
-    boolean can_move_no_bullet(Direction dir,BulletInfo[] buls) {
-        MapLocation loc = rc.getLocation().add(dir,RobotType.SCOUT.strideRadius);
-        return rc.canMove(loc) && !is_on_bullet(loc,buls);
-    }
-    boolean is_on_bullet(MapLocation loc,BulletInfo[] buls){
-        for(BulletInfo bul : buls){
-            if(loc.distanceTo(bul.location) < RobotType.SCOUT.bodyRadius){
-                return true;
-            }
-        }
-        return false;
-    }
-    boolean move_no_bullets() throws GameActionException {
-        Direction dir = movement.bestDir();
-        BulletInfo[] bullets = rc.senseNearbyBullets(RobotType.SCOUT.bodyRadius + RobotType.SCOUT.strideRadius);
-
-        final int checksPerSide = 6;
-        final float degreeOffset = 10;
-        // First, try intended direction
-        if (can_move_no_bullet(dir,bullets)) {
-            rc.move(dir);
-            return true;
-        }
-
-        // Now try a bunch of similar angles
-        int currentCheck = 1;
-
-        while(currentCheck <= checksPerSide) {
-            // Try the offset of the left side
-            if(can_move_no_bullet(dir.rotateLeftDegrees(degreeOffset*currentCheck),bullets)) {
-                rc.move(dir.rotateLeftDegrees(degreeOffset*currentCheck));
-                return true;
-            }
-            // Try the offset on the right side
-            if(can_move_no_bullet(dir.rotateRightDegrees(degreeOffset*currentCheck),bullets)) {
-                rc.move(dir.rotateRightDegrees(degreeOffset*currentCheck));
-                return true;
-            }
-            // No move performed, try slightly further
-            currentCheck++;
-        }
-
-        // A move never happened, so return false.
-        return false;
+        int end4 =  Clock.getBytecodeNum();
+        System.out.print("here1: ");
+        System.out.println(end1-start);
+        System.out.print("here2: ");
+        System.out.println(end2-end1);
+        System.out.println(end3-end2);
+        System.out.println(end4-end3);
     }
     RobotInfo first_scout_or_gard(){
         RobotInfo[] robots = rc.senseNearbyRobots(-1,enemy);
@@ -97,40 +57,12 @@ public class Scout extends  FightRobot {
             movement.addLiniarPull(rob.location,val);
         }
     }
-    MapLocation into_gardener_attack_range(){
-        float rob_sense_range = RobotType.GARDENER.bodyRadius/2 + RobotType.SCOUT.strideRadius;
+    void into_gardener_attack_range(){
+        float rob_sense_range = RobotType.GARDENER.bodyRadius + RobotType.SCOUT.strideRadius;
         for(RobotInfo rob : rc.senseNearbyRobots(rob_sense_range,enemy)){
             if(rob.type == RobotType.GARDENER){
-                //Direction dir_to = rc.getLocation().directionTo(rob.location);
-                //float dis_to = rc.getLocation().distanceTo(rob.location);
-                //float dis_move = dis_to - (RobotType.GARDENER.bodyRadius + RobotType.SCOUT.bodyRadius + 0.001f);
-                //rc.getLocation().add(dir_to,dis_move);
-                return into_gardener_attack_range(rob.location);
+                movement.addConsiderPoint(directly_up_to(rob),Const.SCOUT_MOVE_GARD);
             }
         }
-        return null;
-    }
-    MapLocation into_gardener_attack_range(MapLocation gard_loc){
-        for(int i = 0; i < 10; i++){
-            Direction dir = randomDirection();
-            MapLocation moveloc = gard_loc.add(dir,2.0001f);
-            if(moveloc.distanceTo(gard_loc) < mytype.strideRadius &&  rc.canMove(moveloc)){
-                return  moveloc;
-            }
-        }
-        return null;
-    }
-    boolean move_into_gard_att_range() throws GameActionException {
-        MapLocation loc = into_gardener_attack_range();
-        if(loc == null){
-            return false;
-        }
-        else{
-            if(rc.canMove(loc)){
-                rc.move(loc);
-                return true;
-            }
-        }
-        return false;
     }
 }

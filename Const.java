@@ -34,6 +34,11 @@ public class Const {
     final static float CHASE_CONSTANT_VAL = 5.0f;
     final static float GARD_MOVE_TOWARDS_UNHEALED_TREE = 3.5f;
 
+    //total comparison decision minima
+    final static float SCOUT_MOVE_GARD = 20.0f;
+    final static float TROOP_MOVE_SCOUT = 15.0f;
+    final static float MOVE_ON_BULLET = 18.0f;
+
     //movement action constants
     final static float MOVE_EFFICIENCY = 0.9f;
     final static int WANDER_MEMORY_LENGTH = 2;
@@ -67,6 +72,9 @@ public class Const {
 
         return low_health_val * bullet_cost_val * is_scout_bonus;
     }
+    static Direction randomDirection() {
+        return new Direction((float)Math.random() * 2 * (float)Math.PI);
+    }
     static float chase_val(RobotType chaser_ty,float chaser_h,MapLocation chaser_loc,RobotType chased_ty,float chased_h,MapLocation chased_loc){
         if(!chaser_ty.canAttack()){
             return 0;
@@ -79,5 +87,9 @@ public class Const {
         float damage_value = damageValue(chased_ty,chased_h);
         float distance_val = 16.0f / chaser_loc.distanceSquaredTo(chased_loc);
         return attack_val * bul_speeed_val * damage_value * distance_val * CHASE_ADJ_VAL * CHASE_CONSTANT_VAL;
+    }
+    static float randInRange(float min, float max){
+        final float dis = max - min;
+        return (float)(Math.random()) * dis + min;
     }
 }

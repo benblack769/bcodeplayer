@@ -51,10 +51,7 @@ public class Gardener extends BaseRobot{
     void handle_move() throws GameActionException {
         if(!tree_built) {
             //try to move optimally
-            if (!moveOpti()) {
-                // try to move randomly
-                tryMove(randomDirection());
-            }
+            moveOpti();
         }
     }
     void handle_is_being_attacked(){

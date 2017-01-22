@@ -18,7 +18,7 @@ final public class PolyLine {
     void addSmallBody(BodyInfo body,float extraRad){
         MapLocation cen = body.getLocation();
         float rad = body.getRadius() + extraRad;
-        Direction rand_dir = BaseRobot.randomDirection();
+        Direction rand_dir = Const.randomDirection();
         segs.add(new LinSeg(cen.add(rand_dir,rad),cen.add(rand_dir.opposite(),rad)));
     }
     LinSeg bul_seg(BulletInfo bul,int turns){

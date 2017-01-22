@@ -29,14 +29,10 @@ public class Lumberjack extends BaseRobot {
                 MapLocation myLocation = rc.getLocation();
                 MapLocation enemyLocation = robots[0].getLocation();
                 Direction toEnemy = myLocation.directionTo(enemyLocation);
-
-                tryMove(toEnemy);
             } else {
                 move_to_tree();
-                if(!moveOpti()) {
-                    // Move Randomly
-                    ///tryMove(randomDirection());
-                }
+
+                moveOpti();
             }
         }
         chop_best_tree();
